@@ -1,0 +1,545 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage{multirow}
+\usepackage{color, colortbl}
+\usepackage{caption}
+\usepackage[affil-it]{authblk}
+\usepackage{caption}
+\usepackage[ruled,vlined]{algorithm2e}
+\captionsetup[figure]{font=small,labelfont=small}
+\usepackage[backend=biber, bibencoding=utf8]{biblatex}
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\graphicspath{{./images/}}
+\addbibresource{ref.bib}
+\definecolor{cyan}{rgb}{.88,1,1}
+\definecolor{gray}{gray}{.7}
+
+\title{\vspace{-2.0cm}Comparison of Gaussian copula and random forests in zero-inflated spatial prediction for forestry applications}
+\date{\today}
+\author{Nick Sun}
+\affil{Oregon State University, Department of Statistics}
+
+\doublespacing
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+	Forestry inventory is a critical part of monitoring and servicing ecosystems and often involves statistical estimation of quantities such as total wood volume.
+	However, forestry data is often zero-inflated, heavily skewed, and spatially dependent, making it difficult to model using traditional statistical and geostatistical models.
+	Two new techniques have been proposed to estimate spatially dependent data: spatial Gaussian copula and spatial random forests.
+	In this paper, we compare the predictive performance of these new models along with traditional kriging on both simulated and resampled data.
+\end{abstract}
+
+\section{Introduction}
+An important component of forest maintenance is regular inventory of forestry resources, such as total timber volume, total biomass, etc.
+Since forests can cover enormous areas over rough terrain, it is often not possible to sample certain areas of forests due to physical, budgetary, or time constraints.
+Spatial estimation and interpolation is often employed to fill gaps in sampling and calculate estimations of relevant inventory quantities.
+However, forestry data has several qualities that make it difficult to model.
+
+Forestry data taken at sampled points or plots are likely to be correlated with data points that are close by.
+This is what is popularly known as Tobler's First Law: ``Everything is related to everything else, but near things are more related than distant things''\cite{miller04}.
+This dependency structure precludes classical statistical models like ordinary least squares regression since those techniques rely on the assumption of independent and identially distributed data.
+
+Furthermore, forestry data is often \textit{semicontinuous} in that its distribution contains a point-mass at value 0 and a positive skewed distribution\cite{mills13}.
+This overdispersion often requires modeling using a mixture distribution which combines two data generating processes: one which only generates zeros and another which generates nonnegative, continuous values.
+Modelling using these mixure distributions has been explored thoroughly in non-spatial cases, but standard spatial prediction and interpolation tools such as those available in \textbf{ArcGIS Geoanalyst Toolbox}\footnote{See ESRI documentation for more detail} do not have specialized methods to handle this semicontinuous data.
+
+This gives need for a geostatistical model which can incorporate spatial dependence and model overdispersion of zeros.
+In this paper, we give a brief overview of spatial random forests from the \textbf{RFsp} \texttt{R} package\cite{hengl18} and the spatial Gaussian copula models\cite{madsen09} and compare their predictive performance in forestry applications using both simulated and resampled data.
+
+\section{Data}
+
+The forestry inventory data used here was made available by the Forestry Inventory and Analysis program of the USDA Forest Service, containing inventory information on 13 variables of interest across 1224 plots of land in northwest Oregon.
+
+\begin{wrapfigure}{r}{.49\textwidth}
+	\includegraphics[width=.48\textwidth]{raw_histograms}
+	\caption{Histograms of forestry inventory variables.}
+\end{wrapfigure}
+
+The response variables of interest include total volume, total biomass, total number of trees, and volume of specific tree species.
+Histograms of the response variables indicate that the data are positively skewed and zero inflated.
+Additionally, the dataset includes fuzzed\footnote{White noise is added to protect privacy of private landowners.} latitude, longitude, and elevation information.
+Possible covariate variables include annual precipitation, tc3 wetness index\cite{raynolds16}, annual temperature, NDVI, and cover.
+
+\paragraph{Simulated Data} We create simulated datasets by generating multivariate normal observations with the sample correlation matrix from the original data.
+We then backtransform using the quantile function of the zero-inflated gamma function that was found to fit the original data.
+We simulated $m=1000$ datasets of size $n=1224$ for total timber volume and hemlock volume, two common variables of interest in forestry inventory applications.
+
+Due to the difficulty of simulating the covariates such that the original relationships between the covariates and the responses were preserved, only the response variables were generated.
+The models will be trained solely on the geographic locations and response values of the points in the training set.
+Finally, each simulated datasets is randomly split into a training data and test set.
+
+\paragraph{Resampled Data} We also generate training datasets by sampling rows without replacement from the orignal data with the remaining rows serving as a test set.
+For models trained on these resampled datasets, we will be able to use covariates present in the Oregon dataset in our models, such as annual average temperature and precipitation.
+Since the focus of this study is not inference or exploration, we will focus on covariates that are known from previous work\cite{madsen09} to be related to forestry inventory.
+
+\begin{center}
+	\begin{figure}[ht]
+		\includegraphics[width=\textwidth]{timber_annpre}
+		\caption{Alber's Equal Area Conic projection used here.}
+	\end{figure}
+\end{center}
+
+Plotting the total timber volume alongside annual precipitation reasonably suggests that timber is associated with level of precipitation.
+Figure \ref{fig:annpre} is the semivariogram with the annual precipitation effect incorporated, indicating that spatial autocorrelation effects are greatly reduced.
+This will be valuable in determining model performance when spatial correlation effects are minimal and auxiliary covariates are incorporated.
+
+\section{Methods}
+These simulations will compare the predictive performance of spatial Gaussian copula, spatial random forest, and kriging in different scenarios and sample sizes.
+
+\subsection{Kriging}
+In geostatistics, kriging is a method of spatial interpolation where values at unobserved locations are estimated using a weighted sum of known values.
+In many regards, kriging is very similar in principle to regression analysis.
+In particular, if the data is normally distributed and satisfies \textit{second order stationarity}, this is, if the covariances of points is a function only of the distance between the points and not the specific physical location of the points themselves, then kriging is the \textit{best linear unbiased estimator}\cite{cressie93}.
+The weights $w$ obtained by kriging are unbiased and minimize estimation variance.
+
+\begin{align*}
+	\hat{z}(x_0) = \sum_{i=1}^{N} w_i z(x_i)
+\end{align*}
+where $x_0$ is the point to be predicted and $z(x_i)$ are the observed points.
+
+If the response at point $u_\alpha$ is defined as the function $Z(u_\alpha)$, covariance between points is estimated using the sample semivariogram which is defined for a lag distance $h$ as
+\begin{align*}
+	\hat{\gamma}(h) = \frac{1}{2 N(h)} \sum_{i=1}^{N(h)} (Z(u_{\alpha}) - Z(u_{\alpha} + h))^2
+\end{align*}
+where $N(h)$ is the number of pairs separated by distance $h$.
+An underlying theoretical population variogram model is then fit to $\hat{\gamma}(h)$, such as the Gaussian variogram model:
+\begin{align*}
+	\gamma(h) = c_0 + c_1 \left( 1 - \text{exp}\left(-\frac{h}{a}\right)^2\right)
+\end{align*}
+Using this theoretical variogram function, we can calculate the covariance $C(h) = \sigma^2 - \gamma(h)$ for any lag distance $h$ where $\sigma^2$ is the sample variance of all points. Kriging is often thought of as a two-step process where:
+\begin{enumerate}
+	\item Spatial covariance is determined by fitting a \textit{theoretical variogram} to the \textit{experimental variogram}
+	\item Observation weights are calculated using this covariance structure and used to interpolate or predict unobserved points
+\end{enumerate}
+
+The original timber volume data was found to fit best with a Gaussian model, however, the Gaussian model may not be the best fit for the training datasets we created, particularly in the resampling data study.\footnote{Several of our simulated datasets were also found to fit best with an exponential or spherical variogram model.}
+Often times, a theoretical variogram model is fit to the experimental variogram using interactive tools such as \texttt{geoR::eyefit}. 
+For the purposes of this simulation study, the \texttt{automap} package will be used which relies on restricted maximum likelihood methods from the \texttt{gstat} package to fit the appropriate nugget and sill parameters, select the best theoretical model, and fit a kriging model.
+
+As an estimation approach, kriging makes use of distance between points as well as axes of spatial continuity and redundancy of data points.
+Kriging therefore is a very popular technique among spatial analysts since it incorporates a lot of information into the modelling process.
+However, kriging still has underlying assumptions of a Gaussian process, potentially making it ill-suited for semicontinuous data.
+
+\begin{wrapfigure}{hr}{.4\textwidth}
+	\includegraphics[height=5.5cm]{semivariogram_annpre}
+	\caption{\label{fig:annpre}Note that there is almost no change in semivariance as distance increases.}
+\end{wrapfigure}
+
+\paragraph{Ordinary and Universal Kriging} A common point of confusion for newcomers of geostatistics is that kriging can refer to a variety of related spatial interpolation techniques with different nomenclature.
+For consistency with the \texttt{gstat} and \texttt{automap} packages, we will refer to the two kriging techniques we use in this paper as \textit{ordinary kriging} (OK) and \textit{universal kriging} (UK).
+Both techniques rely heavily on the process outlined above and therefore are very similar in principle.
+
+Ordinary kriging is used for simulations that do not involve any covariate.
+For the scope of this work, this means that ordinary kriging is used for studying our simulated datasets, but not our resampled ones.
+More technically, OK assumes a constant unknown mean in the local neighborhood of each estimation point.
+
+This differs from universal kriging (referred to as \textit{regression kriging} or \textit{kriging with external drift} in other sources) which assumes an overall smooth, nonstationary trend in the data which can be described as a function of auxiliary predictors and a random residual which is estimated from residuals of the observed points.\cite{kis15}
+Universal kriging is used in simulations which involve using annual precipitation as a covariate.
+
+\subsection{Spatial Gaussian Copula}
+Copulas are multivariate cumulative distribution functions where each variable has a standard uniform marginal distribution.
+Copulas were developed to describe dependency structures between random variables and have been previously applied in areas such as microRNA\cite{gaynanova18} and box-office data\cite{duan17}.
+An important copula result is Sklar's Theorem states that every $n$-dimensional multivarite cumulative distribution function $G(\vec{X})$ of a random vector $\vec{X} = (X_1, \ldots ,X_n)$ can be expressed in terms of the marginal cumulative distribution functions $F_i(X_i)$ and a copula function $C: [0,1]^n \rightarrow [0,1]$ such that
+$$
+G(\vec{X}) = C(F_1(X_1), \ldots, F_n(X_n))
+$$
+There are many possible choices for $C$, but a popular selection is the multivariate normal CDF $\Phi_{\Sigma}$ where $\Sigma$ is the correlation matrix describing the relationship between the variables.
+
+Madsen\cite{madsen09} proposed a spatial Gaussian copula
+$$
+G(\vec{V}, \Sigma) = \Phi_{\Sigma}(\Phi^{-1}(F_1(v_1)), \ldots, \Phi^{-1}(F_n(v_n)))
+$$
+where the correlation matrix $\Sigma$ is chosen such that it represents the spatial relationships between each of the data points.
+Differentiating the above copula yield the joint density function of the spatially dependent data
+$$
+g(\vec{V}) = \| \Sigma \|^{1/2} \text{exp}\left(-\frac{1}{2} z^T (\Sigma^{-1} - I_n) z\right) \prod_{i = 1}^m f_i(y_i)
+$$
+where $z = (\Phi^{-1}(F_1(y_1)), \ldots, \Phi^{-1}(F_n(y_n)))$.
+This copula will be able to incorporate the spatial dependency structure, however this method requires the appropriate selection of $F$ and $\Sigma$.
+
+A common choice for spatial correlation matrix $\Sigma$ has $i,j$th entry equal to the value of the exponential correlogram function
+$$
+\Sigma_{ij}(\theta) = 
+	\begin{cases}
+		\theta_0 \text{exp}(-h_{ij} \theta_1) & \text{ for } i \neq j\\
+		1 & \text{ when } i = j
+	\end{cases}
+$$
+where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \theta_0 \leq 1$ is the nugget parameter describing the variation of the data at $h = 0$, and $\theta_1 > 0$ is the decay parameter.
+These parameters can be estimated from the original data\cite{madsen09}.
+
+An appropriate $F$ function would be one which can handle semicontinuous data.
+In this paper, we have chosen to use a zero-inflated gamma (ZIG) function on cube-root transformed response data.
+\begin{align*}
+&f(x) = 
+\begin{cases}
+	0 & \text{ w.p } p \\
+	\frac{1}{\Gamma(\alpha) \beta^\alpha} x^{\alpha -1} \text{exp}\left(-\frac{x}{\beta}\right) & \text{ w.p. } 1 - p 
+\end{cases} 
+\\
+&\text{where } p \sim \text{Bernoulli}(\pi)
+\end{align*}
+The cube root transformation makes the continuous component less heavily skewed.
+Additionally, for the purposes of the copula model, zero values were instead replaced with uniform random variables sampled from a $U(0, \epsilon)$ distribution where $\epsilon$ is the smallest nonzero value in the observed dataset.
+
+The complete spatial Gaussian copula algorithm used here is detailed below:
+
+\begin{singlespace}
+\begin{algorithm}[H]
+\SetAlgoLined
+\KwResult{Predictions for unobserved locations}
+\For{Each simulated dataset} {
+	Cube root transform observed responses\; 
+	Find smallest nonzero responses $\epsilon$ \;
+	Transform 0s into small $U(0, \epsilon)$ random variables\;
+	Calculate spatial covariance parameters $\theta_N, \theta_R$ and ZIG parameters $\beta, \pi$\;
+	\uIf{covariates present}{
+		calculate $\beta$, $\pi$ using logistic and Gamma GLM with the covariates\;
+	}
+	\Else{
+			calculate $\beta$, $\pi$ using logistic and Gamma intercept-only GLM\;
+	}
+	Transform responses to standard uniform using CDF of zero-inflated Gamma\; 
+	Use kriging on the standard normal random variables to get estimates for the unobserved values \;
+	Backtransform unobserved standard normal values to get predictions for the unobserved values on the original scale\; 
+}
+	\caption{Spatial Gaussian Copula}
+\end{algorithm}
+\end{singlespace}
+
+\subsection{Spatial Random Forest}
+The random forest is a machine learning algorithm which creates an ensemble of decision trees from bootstrapped (also referred to as \textit{bagged}) samples of the original data\cite{breiman01}.
+Each of the $n$ decision trees is trained on a random subset of variables at each split in the tree.
+While individual decision trees are prone to overfitting on training data, a large collection of randomly generated weak learners is less prone to these biases.
+The prediction of the random forest is taken as the mode or average of the entire ensemble.
+One of the notable advantages of using a machine learning algorithm like random forests is that no statistical assumptions are required, therefore, we are not required to transform the shape of the data as we had to in the Gaussian copula model.
+
+Random forests have been used in spatial prediction, but the spatial information is often disregarded\cite{hengl18}.
+Ignoring spatial autocorrelation can result in biased predictions.
+In order to incorporate this information in the model, the \textbf{RFsp} packages introduces the spatial random forest which uses buffer distances from observed points as explanatory variables.
+The generic spatial random forest system is proposed in terms of three main input components:
+$$
+Y(s) = f(X_G, X_R, X_P)
+$$
+where $X_G$ are covariates based on geographic proximity or spatial relationships, and $X_R$ and $X_P$ are referred to respectively as surface reflectance covariates and process-based covariates.
+Common examples of surface reflectance covariates would be spectral bands from remote sensing images.
+Process-based covariates are more traditional independent variables, for example, average annual precipitation.
+Not all types of covariates need be present to create a spatial random forest and previous work by Hengl et. al. has demonstrated that including only $X_G$ generates predictions similar to ordinary kriging while including $X_G$ and $X_P$ generates predictions similar to universal kriging\cite{hengl18}.
+
+The \textbf{RFsp} packages is built on top of the \textbf{ranger} \texttt{R} package which supports high dimensional datasets.
+However, the authors of spatial random forest caution that since distances need to be calculated in order to include spatial information, \textbf{RFsp} might be slow for large datasets.
+
+\vspace{.5cm}
+
+\begin{singlespace}
+\begin{algorithm}[H]
+\SetAlgoLined
+\KwResult{Predictions for unobserved locations}
+\For{Each simulated dataset} {
+	The buffer distances between each point in the training set is calculated\; 
+	$n$ random samples are drawn with replacement from the training data\;
+	$n$ trees are generated from the random samples with the buffer distances as covariates\;
+	The buffer distances between each unobserved location and the points in the training set is calculated\; 
+	These buffer distances are input into the random forest and a prediction is generated\; 
+}
+	\caption{Spatial Random Forest}
+\end{algorithm}
+\end{singlespace}
+
+\section{Results}
+\begin{singlespace}
+We will be comparing the predictive accuracy of the following models:
+\begin{enumerate}
+	\item Spatial Gaussian copula with ZIG marginal distributions
+	\item Ordinary kriging via \texttt{automap}
+	\item Several spatial random forests with varying $num.trees = 50, 100, 150$
+	\item Semicontinuous \textit{zero-corrected} kriging and spatial random forests where predicted values smaller than the smallest nonzero training observation are converted to 0
+\end{enumerate}
+\end{singlespace}
+
+Testing will be done on simulated total volume and hemlock volume, as well as the resampled original data.
+Hemlock data was of particular study interest since nearly \textbf{56\%} of its original values were zeros, possibly representing a more significant challenge to model than total volume which had \textbf{24.3\%} zeros.
+
+We will also examine how changes in the size of the training set affect the accuracy for different methods with $n = 100, 200, 300, 500, 1000, 1200$.
+The metric of interest will be root mean square prediction error:
+$$
+RMSPE = \sqrt{\frac{1}{mR} \sum_{r=1}^R \sum_{j=1}^m (\hat{y}_{j|r} - y_{j|r})^2}
+$$
+where $r \in R$ is a simulated dataset and $j|r$ signifies the prediction for observation $j$ in the dataset $r$.
+
+We will also examine the \textit{signed relative bias} of each pointwise prediction method:
+$$
+SRB = \text{sign}(\tau) \sqrt{\frac{\tau^2}{MSPE - \tau^2}}
+$$
+where $\tau = \frac{1}{mR} \sum_{r = 1}^R \sum_{j = 1}^m (\hat{y}_{j|r} - y_{j|r})$.
+This formula derives from the fact that mean squared prediction error is equal to the bias of the estimate squared plus the variance of the estimate.
+A smaller absolute value of SRB indicates smaller bias in the method with a negative value indicating underprediction and a positive value indicating overprediction.\cite{verhoef13}
+
+Our final prediction metric is 90\% \textit{prediction interval coverage} for each of the methods:
+\begin{align*}
+PIC_{90} = \frac{1}{mR} \sum_{r=1}^R \sum_{j=1}^m I\left(\hat{y}_{j|r} - 1.645\hat{\text{se}}(\hat{y}_{j|r}) \geq y_{j|r} \cap y_{j|r} \leq \hat{y}_{j|r} + 1.645\hat{\text{se}}(\hat{y}_{j|r})\right)
+\end{align*}
+where $\hat{\text{se}}(\hat{y}_{j|r})$ is the standard error of all the predicted values $\hat{y}_{j|r}$ in resampled dataset $r$.\cite{verhoef13}
+$PIC_{90}$ captures the proportion of actual values for the unobserved points fall within their respective 90\% prediction intervals.
+A well-calibrated model with proper assumptions should have a $PIC_{90}$ close to 90\%, but since our training and test points are spatially autocorrelated, we will examine this metric from the viewpoint of comparing models against one another. 
+
+In addition to these metrics, we will also examine the residuals and specific prediction performance of zero values in each model.
+
+\subsection{RMSPE}
+\begin{singlespace}
+	\begin{center}
+	\begin{tabular}{|| c | c c c c c c c ||}
+	\hline
+	\multicolumn{8}{||c||}{Simulated Total Volume} \\
+	\hline
+	$n$ & Copula & Kriging & $RFsp_{150}$ & $RFsp_{100}$ & $RFsp_{50}$ & $RFsp_{150}(zeros)$ & Kriging (zeros) \\ [.5ex] 
+	\hline\hline
+	$1200$ & 246.139 & 238.878 & 251.040 & 250.719 & \cellcolor{gray}252.216 & 251.042 & \cellcolor{cyan}238.868 \\
+	$1000$ & \cellcolor{gray}264.614 & 248.749 & 256.095 & 256.304 & 257.337 & 256.116 & \cellcolor{cyan}248.721 \\
+	$500$ & 254.933 & 243.617 & 253.945 & 254.267 & \cellcolor{gray}255.217 & 253.957 & \cellcolor{cyan}243.604 \\
+	$300$ & \cellcolor{gray}264.614 & 248.749 & 256.095 & 256.304 & 257.337 & 256.116 & \cellcolor{cyan}248.721 \\
+	$200$ & \cellcolor{gray}275.154 & 253.674 & 258.074 & 258.246 & 259.417 & 258.113 & \cellcolor{cyan}253.628 \\
+	$100$ & \cellcolor{gray}298.042 & 268.752 & \cellcolor{cyan}266.179 & 266.376 & 267.221 & 266.260 & 268.717 \\ [.5ex] 
+	\hline
+	\end{tabular}
+	\vspace{.06cm}
+
+	\textit{Cyan indicates lowest RMSPE for sample size; gray indicates highest RMSPE.}
+	\end{center}
+\end{singlespace}
+For small sample sizes in the total volume simulation, the copula model had between 5\% and 10\% higher RMSPE than the kriging or random forest models.
+As $n$ increases, the copula model had lower RMSPE than the random forests.
+Kriging and zero-corrected kriging had the lowest RMSPE for most sample sizes, narrowly outperforming random forests.
+
+\begin{center}
+	\begin{singlespace}
+\begin{tabular}{|| c | c c c c c c c ||}
+\hline
+\multicolumn{8}{||c||}{Simulated Hemlock Volume} \\
+\hline
+$n$ & Copula & Kriging & $RFsp_{150}$ & $RFsp_{100}$ & $RFsp_{50}$ & $RFsp_{150}(zeros)$ & Kriging (zeros) \\ [.5ex] 
+\hline\hline
+$1200$ & 48.391 & 46.609 & 48.631 & 48.567 & \cellcolor{gray}48.799 & 48.632 & \cellcolor{cyan}46.594 \\
+$1000$ & \cellcolor{gray}50.500 & 48.318 & 50.197 & 50.268 & 50.442 & 50.197 & \cellcolor{cyan}48.309 \\
+$500$ & \cellcolor{gray}51.081 & 48.821 & 50.755 & 50.839 & 51.026 & 50.756 & \cellcolor{cyan}48.807 \\
+$300$ & \cellcolor{gray}51.456 & 49.879 & 51.040 & 51.120 & 51.332 & 51.041 & \cellcolor{cyan}49.866 \\
+$200$ & \cellcolor{gray}52.030 & 50.139 & 51.161 & 51.192 & 51.396 & 51.161 & \cellcolor{cyan}50.123 \\
+$100$ & \cellcolor{gray}52.542 & 51.560 & 51.671 & 51.679 & 51.911 & 51.671 & \cellcolor{cyan}51.546 \\ [.5ex] 
+\hline
+\end{tabular}
+\end{singlespace}
+\end{center}
+
+We see a similar pattern to the hemlock volume simulation where kriging and zero-corrected kriging had the lowest RMSPE.
+The copula model had the highest RMSPE except for $n=1200$, however the relative differences between all the models are smaller than in the total volume simulation.
+
+\begin{center}
+	\begin{singlespace}
+\begin{tabular}{|| c | c c c c c c c ||}
+\hline
+\multicolumn{8}{||c||}{Resampled Total Volume} \\
+\hline
+$n$ & Copula & Kriging & $RFsp_{150}$ & $RFsp_{100}$ & $RFsp_{50}$ & $RFsp_{150}(zeros)$ & Kriging (zeros) \\ [.5ex] 
+\hline\hline
+$1200$ & 296.905 & \cellcolor{gray}303.859 & \cellcolor{cyan}293.510 & 294.086 & 295.379 & \cellcolor{cyan}293.510 & 303.846 \\
+$1000$ & 295.311 & \cellcolor{gray}301.473 & \cellcolor{cyan}292.139 & 292.557 & 293.580 & \cellcolor{cyan}292.139 & 301.461 \\
+$500$ & 303.553 & \cellcolor{gray}304.366 & \cellcolor{cyan}296.997 & 297.362 & 298.388 & \cellcolor{cyan}296.997 & 304.349 \\
+$300$ & \cellcolor{gray}305.409 & 304.526 & \cellcolor{cyan}300.984 & 301.412 & 302.469 & \cellcolor{cyan}300.984 & 304.504 \\
+$200$ & \cellcolor{gray}308.267 & 304.898 & \cellcolor{cyan}303.921 & 304.393 & 305.360 & 303.922 & 304.867 \\
+$100$ & \cellcolor{gray}313.791 & 305.210 & \cellcolor{cyan}309.662 & 310.072 & 310.971 & 309.669 & 305.159 \\ [.5ex] 
+\hline
+\end{tabular}
+\end{singlespace}
+\end{center}
+
+In the total volume resampling study, random forests with $num.trees=150$ have the best RMSPE across the board.
+For small training sizes, the copula model has the highest RMSPE but this changes when $n$ grows large where it outperforms kriging and zero-corrected kriging.
+
+\subsection{Signed Relative Bias}
+
+In all simulations and sample sizes, the copula model showed negative bias indicating that predictions tend to be underestimated.
+Random forests and kriging models show minimal bias.
+
+\begin{center}
+	\begin{singlespace}
+\begin{tabular}{|| c | c c c c c c c ||}
+\hline
+\multicolumn{8}{||c||}{Simulated Total Volume} \\
+\hline
+$n$ & Copula & Kriging & $RFsp_{150}$ & $RFsp_{100}$ & $RFsp_{50}$ & $RFsp_{150}(zeros)$ & Kriging (zeros) \\ [.5ex] 
+\hline\hline
+$1200$ & \cellcolor{gray}-.146 & \cellcolor{cyan}-.001 & .003 & .003 & .003 & .003 & \cellcolor{cyan}-.001 \\
+$1000$ & \cellcolor{gray}-.155 & \cellcolor{cyan}.001 & .009 & .009 & .009 & .009 & \cellcolor{cyan}.001 \\
+$500$ & \cellcolor{gray}-.152 & \cellcolor{cyan}.001 & .007 & .007 & .006 & .006 & \cellcolor{cyan}.001 \\
+$300$ & \cellcolor{gray}-.161 & \cellcolor{cyan}.002 & .004 & .003 & .003 & .003 & \cellcolor{cyan}.002 \\
+$200$ & \cellcolor{gray}-.194 & \cellcolor{cyan}.000 & -.001 & -.001 & -.001 & -.002 & \cellcolor{cyan}.000 \\
+$100$ & \cellcolor{gray}-.134 & .006 & .003 & .003 & .003 & \cellcolor{cyan}.001 & .006 \\ [.5ex] 
+\hline
+\end{tabular}
+\end{singlespace}
+\end{center}
+
+\begin{center}
+	\begin{singlespace}
+\begin{tabular}{|| c | c c c c c c c ||}
+\hline
+\multicolumn{8}{||c||}{Simulated Hemlock Volume} \\
+\hline
+$n$ & Copula & Kriging & $RFsp_{150}$ & $RFsp_{100}$ & $RFsp_{50}$ & $RFsp_{150}(zeros)$ & Kriging (zeros) \\ [.5ex] 
+\hline\hline
+$1200$ & \cellcolor{gray}-.184 & .014 & .012 & \cellcolor{cyan}.011 & \cellcolor{cyan}.011 & .012 & .015 \\
+$1000$ & \cellcolor{gray}-.190 & \cellcolor{cyan}.001 & .004 & .004 & .004 & .004 & .002 \\
+$500$ & \cellcolor{gray}-.190 & \cellcolor{cyan}.000 & .002 & .002 & .001 & .002 & .001 \\
+$300$ & \cellcolor{gray}-.190 & .003 & \cellcolor{cyan}.001 & \cellcolor{cyan}.001 & \cellcolor{cyan}.001 & \cellcolor{cyan}.001 & .004 \\
+$200$ & \cellcolor{gray}-.189 & .002 & -.002 & \cellcolor{cyan}-.001 & \cellcolor{cyan}-.001 & -.002 & .003 \\
+$100$ & \cellcolor{gray}-.182 & .011 & \cellcolor{cyan}.002 & .003 & .003 & \cellcolor{cyan}.002 & .012 \\ [.5ex] 
+\hline
+\end{tabular}
+\end{singlespace}
+\end{center}
+
+\begin{center}
+	\begin{singlespace}
+\begin{tabular}{|| c | c c c c c c c ||}
+\hline
+\multicolumn{8}{||c||}{Resampled Total Volume} \\
+\hline
+$n$ & Copula & Kriging & $RFsp_{150}$ & $RFsp_{100}$ & $RFsp_{50}$ & $RFsp_{150}(zeros)$ & Kriging (zeros) \\ [.5ex] 
+\hline\hline
+$1200$ & \cellcolor{gray}-.300 & \cellcolor{cyan}-.002 & .012 & .012 & .014 & .012 & \cellcolor{cyan}-.002 \\
+$1000$ & \cellcolor{gray}-.297 & \cellcolor{cyan}.002 & .018 & .018 & .018 & .018 & \cellcolor{cyan}.002 \\
+$500$ & \cellcolor{gray}-.301 & \cellcolor{cyan}.000 & .013 & .013 & .013 & .013 & \cellcolor{cyan}.000 \\
+$300$ & \cellcolor{gray}-.292 & \cellcolor{cyan}.000 & .015 & .015 & .015 & .015 & .001 \\
+$200$ & \cellcolor{gray}-.282 & \cellcolor{cyan}.000 & .012 & .013 & .014 & .012 & \cellcolor{cyan}.000 \\
+$100$ & \cellcolor{gray}-.260 & \cellcolor{cyan}.007 & .008 & .008 & .009 & .008 & \cellcolor{cyan}.007 \\ [.5ex] 
+\hline
+\end{tabular}
+\end{singlespace}
+\end{center}
+
+\subsection{Residual Analysis}
+
+We produced residual plots for the Gaussian copula, kriging, and random forests with $num.trees=150$ in each of the simulation scenarios with sample size $n = 500$.
+The dotted line on each plot corresponds indicates a predicted value of 0.
+We see that regardless of model or simulation method, $\hat{y}$ tended to underestimate large values of the observed response.
+\begin{figure}[h]
+	\centering
+\includegraphics[scale=.7]{residual_plots}
+\caption{\label{fig:total_resids}Total volume residual plots}
+\end{figure}
+
+The residual plots in figure \ref{fig:total_resids} are similar for the most part.
+There is a distinct line for the zero predicted values in the copula model whereas the kriging model predicted some negative values.
+
+\begin{figure}[h]
+	\centering
+\includegraphics[scale=.7]{tshevol_residual_plots}
+\caption{\label{fig:hemlock_resids}Hemlock volume residual plots}
+\end{figure}
+
+Figure \ref{fig:hemlock_resids} suggests that random forests produce residuals with higher variance than either the other models.
+While copula and kriging produced residual plots with almost rectangular shapes, random forests produced residuals that looked more like a cloud of points, particularly with observed values around 500.
+
+\begin{figure}[h]
+	\centering
+\includegraphics[scale=.7]{resampling_residual_plots}
+\caption{\label{fig:resamp_resids}Resampled total volume residual plots}
+\end{figure}
+
+Figure \ref{fig:resamp_resids} shows that random forests have the widest residual spread which is relatively homoskedastic as observed values increase.
+This contrasts with kriging residuals which appears as a narrowing funnel as observed values increases.
+The kriging residuals also produced some predictions near zero, even for large values.
+This manifests visually as a ``gap'' within the kriging residuals.
+
+\subsection{Prediction Interval Coverage}
+
+\begin{center}
+\begin{singlespace}
+\begin{tabular}{|| c | c c c | c c c | c c c ||}
+\hline
+\multirow{2}{*}{} &
+\multicolumn{3}{c}{Total Volume} &
+\multicolumn{3}{c}{Hemlock} &
+\multicolumn{3}{c||}{Resampled} \\
+\hline
+$n$ & Copula & Kriging & $RFsp_{150}$ & Copula & Kriging & $RFsp_{150}$ & Copula & Kriging & $RFsp_{150}$ \\ [.5ex]
+\hline\hline
+$1200$ & .841 & \cellcolor{gray}.824 & \cellcolor{cyan}.846 & .721 &\cellcolor{gray}.569 &\cellcolor{cyan} .803 &.735 &\cellcolor{gray}.628 & \cellcolor{cyan}.795 \\
+$1000$ & .847 &\cellcolor{gray}.832 &\cellcolor{cyan} .855 &.718 &\cellcolor{gray}.595 &\cellcolor{cyan} .827 &.739 &\cellcolor{gray}.639 & \cellcolor{cyan}.801 \\
+$500$ & .835 &\cellcolor{gray}.814 &\cellcolor{cyan} .850 & .700 &\cellcolor{gray}.623 &\cellcolor{cyan} .819 &.717 &\cellcolor{gray}.629 & \cellcolor{cyan}.794 \\
+$300$ & .812 &\cellcolor{gray}.786 &\cellcolor{cyan} .844 & .689 &\cellcolor{gray}.640 &\cellcolor{cyan} .816 &.711 & \cellcolor{gray}.628 & \cellcolor{cyan}.785 \\
+$200$ & .793 &\cellcolor{gray}.759 &\cellcolor{cyan} .835 & .676 &\cellcolor{gray}.630 &\cellcolor{cyan} .803 &.706 &\cellcolor{gray}.633 & \cellcolor{cyan}.775 \\
+$100$ & .698 &\cellcolor{gray}.686 &\cellcolor{cyan} .809 & .630 &\cellcolor{gray}.590 &\cellcolor{cyan} .769 &.705 &\cellcolor{gray}.650 & \cellcolor{cyan}.751 \\ [.5ex] 
+\hline
+\end{tabular}
+\end{singlespace}
+\end{center}
+
+We computed $PIC_{90}$ is computed for the Gaussian copula, kriging, and random forests with $num.trees=150$.
+All of the models failed to reach 90\% prediction coverage, but random forests had the greatest coverage which was fairly consistent among the different sample sizes.
+The copula model started with prediction coverage below 70\%, but as sample size increased both closed the gap with the random forest.
+Kriging had the lowest $PIC_{90}$ across the board, particularly in the hemlock and resampled study.
+
+\subsection{Prediction of zero values}
+In the resampled data study with $n = 500$, we also calculated RMSPE and median predictions among the different methods for points with an observed value of 0.
+Figure \ref{fig:zero_yhats} displays the histograms of the predicted values for the Gaussian copula, zero-corrected random forest, and zero-corrected universal kriging. 
+
+\begin{figure}[h]
+	\centering
+\includegraphics[scale=.7]{zero_yhats}
+\caption{\label{fig:zero_yhats}Predictions for zero values}
+\end{figure}
+
+\begin{center}
+\begin{tabular}{|| c | c | c | c | c | c ||}
+	\hline
+	\multicolumn{3}{||c|}{Median $\hat{y}$} &
+	\multicolumn{3}{c||}{RMSPE} \\
+	\hline
+	Copula & $RFsp_{150}$(zeros) & Kriging(zeros)& Copula & $RFsp_{150}$(zeros) & Kriging(zeros)\\
+	\hline
+	\cellcolor{cyan}0 & 61.3 & \cellcolor{gray}131 & \cellcolor{cyan}115 & 170 & \cellcolor{gray}201 \\
+	\hline
+\end{tabular}
+\end{center}
+\vspace{.2cm}
+
+The copula model far outperforms both the random forest and universal kriging model for predicting zero values.
+Across 1000 resampled datasets, the copula correctly predicted 72.5\% of observed zero values, whereas the random forest only correctly predicted .4\% of the values and universal kriging made no predictions of exactly zero.
+
+\section{Conclusion}
+The simulations in our study only covered a small subset of forestry inventory scenarios, but with the prediction metrics we selected, kriging matched or outperformed random forests and Gaussian copula by most measures.
+While both ordinary and universal kriging had a few data artifacts in the form of negative predictions, the kriging models consistently produced unbiased estimates with relatively low RMSPE.
+Both kriging and random forest models also had low absolute values of SRB, suggesting miniscule bias, if any. 
+
+In contrast, our results suggest that the Gaussian copula model underpredicts values moreso than the other two techniques, which may be due to an overabundance of zeros in the predictions.
+Given the SRB metrics for each model, we might reasonably posit that model bias played a role in inflating the copula model's RMSPE.
+However, if properly estimating unobserved points which contain zero are of significant practical importance, the Gaussian copula far outperforms both random forest and kriging.
+
+For the semicontinuous, skewed responses we simulated, every single method underestimated large values, as evidenced by the downward trending residual plots we generated for each scenario.
+The residual plots also showed that the random forest predictions had greater variance than either the copula or the kriging.
+This larger variance also mainfests itself in the $PIC_{90}$ metrics where the random forest consistently had the greatest coverage among the methods.
+High $PIC_{90}$ might be desireable in cases where interval estimates are preferred to point estimates.
+
+%In closing, ordinary and universal kriging are still appear to be viable models in semicontinuous contexts, regularly outperforming both the copula and random forest in RMSPE.
+%However, both Gaussian copula and random forests still have their use cases.
+%The appeal of the random forest lies in the lack of statistical assumptions, making it a very flexible spatial prediction technique.
+%Additionally, there seemed to be little differences in our simulation between random forests with different numbers of trees, suggesting that for some forestry applications, the ensemble learner does not have to be particularly large in order to get good estimates.
+%While the authors of \texttt{RFsp} caution that the package can run slow with large datasets, in our simulations even with the largest training set of $1200$ points, there was little practical difference in runtime between the random forests and the other models.
+%
+%The Gaussian copula by contrast requires more statistical legwork.
+%The marginal distributions of the points need to be known beforehand, requiring significant data exploration.
+%Additionally, the Gaussian copula algorithm we used produced biased results and overpredicted the amount of zeros in the test data.
+%However, in certain cases where the training data is large, the Gaussian copula did produce lower RMSPE than the random forests.
+%The Gaussian copula was also the only model to consistently predict zero values, making it useful for applications where estimating whether or not a point has a zero value is of high practical importance.
+\begin{singlespace}
+\printbibliography
+\end{singlespace}
+
+\end{document}

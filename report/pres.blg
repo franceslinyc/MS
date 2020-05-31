@@ -1,0 +1,16 @@
+[0] Config.pm:302> INFO - This is Biber 2.9
+[1] Config.pm:305> INFO - Logfile is 'pres.blg'
+[25] biber:313> INFO - === Sun May 31, 2020, 13:11:39
+[61] Biber.pm:371> INFO - Reading 'pres.bcf'
+[114] Biber.pm:857> INFO - Found 5 citekeys in bib section 0
+[131] Biber.pm:3981> INFO - Processing section 0
+[147] Biber.pm:4154> INFO - Looking for bibtex format file 'ref.bib' for section 0
+[161] bibtex.pm:1468> INFO - LaTeX decoding ...
+[176] bibtex.pm:1294> INFO - Found BibTeX data source 'ref.bib'
+[207] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[208] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[209] Biber.pm:3809> INFO - Sorting list 'nty/global//global/global' of type 'entry' with template 'nty' and locale 'en-US'
+[209] Biber.pm:3815> INFO - No sort tailoring available for locale 'en-US'
+[215] bbl.pm:617> INFO - Writing 'pres.bbl' with encoding 'ascii'
+[215] bbl.pm:618> INFO - Converting UTF-8 to TeX macros on output to .bbl
+[221] bbl.pm:720> INFO - Output to pres.bbl

@@ -1,0 +1,21 @@
+\boolfalse {citerequest}\boolfalse {citetracker}\boolfalse {pagetracker}\boolfalse {backtracker}\relax 
+\defcounter {refsection}{0}\relax 
+\beamer@sectionintoc {1}{Introduction}{3}{0}{1}
+\defcounter {refsection}{0}\relax 
+\beamer@sectionintoc {2}{Methods}{8}{0}{2}
+\defcounter {refsection}{0}\relax 
+\beamer@sectionintoc {3}{Results}{18}{0}{3}
+\defcounter {refsection}{0}\relax 
+\beamer@subsubsectionintoc {3}{0}{1}{RMSPE}{22}{0}{3}
+\defcounter {refsection}{0}\relax 
+\beamer@subsubsectionintoc {3}{0}{2}{SRB}{25}{0}{3}
+\defcounter {refsection}{0}\relax 
+\beamer@subsubsectionintoc {3}{0}{3}{Residual Plots}{28}{0}{3}
+\defcounter {refsection}{0}\relax 
+\beamer@subsubsectionintoc {3}{0}{4}{Prediction Interval Coverage}{32}{0}{3}
+\defcounter {refsection}{0}\relax 
+\beamer@subsubsectionintoc {3}{0}{5}{Prediction of zero values}{33}{0}{3}
+\defcounter {refsection}{0}\relax 
+\beamer@sectionintoc {4}{Conclusion}{35}{0}{4}
+\defcounter {refsection}{0}\relax 
+\beamer@sectionintoc {5}{References}{38}{0}{5}
