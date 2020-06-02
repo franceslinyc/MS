@@ -1,6 +1,6 @@
 setwd("~/MS_Project/simulation_study/")
-# simdata <- readRDS("../simulated_Y.rds")
-simdata <- readRDS("../simulated_tshevol.rds")
+simdata <- readRDS("../simulated_Y.rds")
+# simdata <- readRDS("../simulated_tshevol.rds")
 dat <- read.csv("../ForestDataFuzzed.csv")
 
 source("../ZIGFunctions.R")
@@ -21,7 +21,7 @@ alb.xy <- project(with(dat,cbind(lon_fuzzed,lat_fuzzed)),
 colnames(alb.xy) <- c("x","y")
 dat <- cbind(alb.xy,dat)
 
-train.n <- 300
+train.n <- 1000
 sim.sets.n <- 1000
 
 obs_responses <- vector(mode = "list",length = sim.sets.n)
@@ -283,4 +283,4 @@ ggplot(resids) +
     theme_minimal() -> g3
 
 library(gridExtra)
-grid.arrange(g1, g3, g2, nrow = 1,
+grid.arrange(g1, g3, g2, nrow = 1)
