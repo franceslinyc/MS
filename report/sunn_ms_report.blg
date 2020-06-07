@@ -1,16 +1,16 @@
 [0] Config.pm:302> INFO - This is Biber 2.9
 [0] Config.pm:305> INFO - Logfile is 'sunn_ms_report.blg'
-[32] biber:313> INFO - === Mon Jun  1, 2020, 17:37:52
-[71] Biber.pm:371> INFO - Reading 'sunn_ms_report.bcf'
-[121] Biber.pm:857> INFO - Found 11 citekeys in bib section 0
-[132] Biber.pm:3981> INFO - Processing section 0
-[148] Biber.pm:4154> INFO - Looking for bibtex format file 'ref.bib' for section 0
-[153] bibtex.pm:1468> INFO - LaTeX decoding ...
-[166] bibtex.pm:1294> INFO - Found BibTeX data source 'ref.bib'
-[220] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
-[220] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
-[220] Biber.pm:3809> INFO - Sorting list 'nty/global//global/global' of type 'entry' with template 'nty' and locale 'en-US'
-[220] Biber.pm:3815> INFO - No sort tailoring available for locale 'en-US'
-[230] bbl.pm:617> INFO - Writing 'sunn_ms_report.bbl' with encoding 'ascii'
-[230] bbl.pm:618> INFO - Converting UTF-8 to TeX macros on output to .bbl
-[238] bbl.pm:720> INFO - Output to sunn_ms_report.bbl
+[19] biber:313> INFO - === Thu Jun  4, 2020, 09:19:16
+[49] Biber.pm:371> INFO - Reading 'sunn_ms_report.bcf'
+[93] Biber.pm:857> INFO - Found 11 citekeys in bib section 0
+[102] Biber.pm:3981> INFO - Processing section 0
+[114] Biber.pm:4154> INFO - Looking for bibtex format file 'ref.bib' for section 0
+[126] bibtex.pm:1468> INFO - LaTeX decoding ...
+[138] bibtex.pm:1294> INFO - Found BibTeX data source 'ref.bib'
+[183] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[183] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[184] Biber.pm:3809> INFO - Sorting list 'nty/global//global/global' of type 'entry' with template 'nty' and locale 'en-US'
+[184] Biber.pm:3815> INFO - No sort tailoring available for locale 'en-US'
+[191] bbl.pm:617> INFO - Writing 'sunn_ms_report.bbl' with encoding 'ascii'
+[191] bbl.pm:618> INFO - Converting UTF-8 to TeX macros on output to .bbl
+[198] bbl.pm:720> INFO - Output to sunn_ms_report.bbl

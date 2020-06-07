@@ -1,0 +1,15 @@
+# A tibble: 1 x 12
+    obs  count mean.gauscop mean.rfsp mean.uk mean.rfsp_tr0 mean.uk_tr0 rmspe.gauscop rmspe.rfsp rmspe.uk rmspe.rfsp_tr0 rmspe.uk_tr0
+  <dbl>  <int>        <dbl>     <dbl>   <dbl>         <dbl>       <dbl>         <dbl>      <dbl>    <dbl>          <dbl>        <dbl>
+1     0 176518            0      61.3    131.          61.3        131.          115.       170.     201.           170.         201.
+
+> sim.final.df %>% 
++     group_by(obs) %>% 
++     summarise(
++         count = n(),
++         gauscop.pzero = sum(gauscop_krige == 0)/count,
++        .... [TRUNCATED] 
+# A tibble: 927 x 5
+     obs  count gauscop.pzero rfsp.pzero uk.pzero
+   <dbl>  <int>         <dbl>      <dbl>    <dbl>
+ 1 0     176518        0.725      0.0137  0.00562

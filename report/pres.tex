@@ -31,16 +31,16 @@
 \begin{frame}
 \frametitle{Forestry Inventory}
 \begin{itemize}
-	\item Forestry inventory is a critical part of monitoring and servicing ecosystems and often involves statistical estimation of quantities such as total wood volume.
-	\item Since forests can cover enormous areas over rough terrain, it is often not possible to sample certain areas of forests due to physical, budgetary, or time constraints.
-	\item However, forestry data is often zero-inflated, heavily skewed, and spatially dependent, making it difficult to model using traditional statistical and geostatistical models.
+	\item Forestry inventory is a critical part of monitoring and servicing ecosystems and often involves statistical estimation of quantities such as total wood volume
+	\item Since forests can cover enormous areas over rough terrain, it is often not possible to sample certain areas of forests due to physical, budgetary, or time constraints
+	\item However, forestry data is often zero-inflated, heavily skewed, and spatially dependent, making it difficult to model using traditional statistical and geostatistical models
 \end{itemize}
 \end{frame}
 
 \begin{frame}
-	\frametitle{Forestry Data}
+	\frametitle{Original Forestry Data}
 	\begin{itemize}
-		\item  The forestry inventory data used here was made available by the Forestry Inventory and Analysis program of the USDA Forest Service, containing inventory information on 13 variables of interest across 1224 plots of land in northwest Oregon.
+		\item  The forestry inventory data used here was made available by the USDA Forestry Inventory and Analysis program, containing 13 variables of interest across 1224 plots of land in northwest Oregon.
 	\end{itemize}
 	\begin{center}
 		\begin{figure}
@@ -52,47 +52,41 @@
 
 \begin{frame}
 	\frametitle{Simulated Data}
+	We simulated $m=1000$ datasets of size $n=1224$ for total timber volume and hemlock volume, two common variables of interest in forestry inventory applications.
+	Previous work used a zero-inflated Gamma distribution to model these variables\cite{madsen09}.
 	\begin{itemize}
-		\item We create simulated datasets by generating multivariate normal observations with the sample correlation matrix from the original data.
-		\item We then backtransform using the quantile function of the zero-inflated gamma function that was found to fit the original data.
-		\item We simulated $m=1000$ datasets of size $n=1224$ for total timber volume and hemlock volume, two common variables of interest in forestry inventory applications.
+		\item We create simulated datasets by generating multivariate normal observations with the sample correlation matrix from the original data
+		\item We then backtransform using the quantile function of the zero-inflated gamma function that was found to fit the original data
 	\end{itemize}
 \end{frame}
 
 \begin{frame}
 	\frametitle{Resampled Data}
 	\begin{itemize}
-		\item We also generate training datasets by sampling rows without replacement from the orignal data with the remaining rows serving as a test set.
-		\item For models trained on these resampled datasets, we will be able to use covariates present in the Oregon dataset in our models, such as annual average temperature and precipitation.
+		\item We also generate training datasets by sampling rows without replacement from the orignal data with the remaining rows serving as a test set
+		\item For models trained on these resampled datasets, we will be able to use covariates present in the Oregon dataset in our models, such as average annual precipitation
 	\end{itemize}
-\end{frame}
-
-
-\begin{frame}
-	\frametitle{Annual Precipitation and Total Timber Volume}
 	\begin{center}
 		\begin{figure}[ht]
-			\includegraphics[width=\textwidth]{timber_annpre}
+			\includegraphics[width=.6\textwidth]{timber_annpre}
 			\caption{Alber's Equal Area Conic projection used here.}
 		\end{figure}
 	\end{center}
 \end{frame}
 
-\section{Methods}
-
 \begin{frame}
 	\frametitle{New Spatial Models}
 	\begin{itemize}
-		\item  These simulations will compare the predictive performance of spatial Gaussian copula, spatial random forest, and kriging in different scenarios and sample sizes.
-		\item Two new techniques have been proposed to estimate spatially dependent data: spatial Gaussian copula and spatial random forests.
+		\item Two new techniques have been proposed to estimate spatially dependent data: spatial Gaussian copula and spatial random forests
+		\item These simulations will compare the predictive performance of these new models and traditional kriging in different spatial prediction scenarios
 	\end{itemize}
 \end{frame}
 
 \begin{frame}
-	\frametitle{Kriging Primer}
+	\frametitle{Kriging}
 	\begin{itemize}
-		\item In geostatistics, kriging is a method of spatial interpolation where values at unobserved locations are estimated using a weighted sum of known values.
-		\item In particular, if the data is normally distributed and satisfies \textit{second order stationarity}, this is, if the covariances of points is a function only of the distance between the points and not the specific physical location of the points themselves, then kriging is the \textit{best linear unbiased estimator}\cite{cressie93}.
+		\item In geostatistics, kriging is a method of spatial interpolation where values at unobserved locations are estimated using a weighted sum of known values
+		\item In particular, if the data is normally distributed and satisfies \textit{second order stationarity}, \textit{i.e.} the covariances of points is a function only of the distance between the points and not the specific physical location of the points themselves, then kriging is the \textit{best linear unbiased estimator}\cite{cressie93}
 	\end{itemize}
 	\begin{align*}
 		\hat{y}_{K}(s_0) = w(s_0)^T y
@@ -100,30 +94,30 @@
 \end{frame}
 
 
-\begin{frame}
-	\frametitle{Kriging Primer}
-	Kriging is often thought of as a two-step process where:
-	\begin{enumerate}
-		\item Spatial covariance is determined by fitting a \textit{theoretical variogram} to the \textit{experimental variogram}
-		\item Observation weights are calculated using this covariance structure and used to interpolate or predict unobserved points
-	\end{enumerate}
-\end{frame}
+%\begin{frame}
+%	\frametitle{Kriging Primer}
+%	Kriging is often thought of as a two-step process where:
+%	\begin{enumerate}
+%		\item Spatial covariance is determined by fitting a \textit{theoretical variogram} to the \textit{experimental variogram}
+%		\item Observation weights are calculated using this covariance structure and used to interpolate or predict unobserved points
+%	\end{enumerate}
+%\end{frame}
 
-\begin{frame}
-	\frametitle{Kriging Primer}
-	\begin{itemize}
-	\item Often times, a theoretical variogram model is fit to the experimental variogram using interactive tools such as \texttt{geoR::eyefit}. 
-	\item For the purposes of this simulation study, the \texttt{automap} package will be used which relies on restricted maximum likelihood methods from the \texttt{gstat} package to fit the appropriate nugget and sill parameters, select the best theoretical model, and fit a kriging model.
-	\end{itemize}
-\end{frame}
+%\begin{frame}
+%	\frametitle{Kriging Primer}
+%	\begin{itemize}
+%	\item Often times, a theoretical variogram model is fit to the experimental variogram using interactive tools such as \texttt{geoR::eyefit}. 
+%	\item For the purposes of this simulation study, the \texttt{automap} package will be used which relies on restricted maximum likelihood methods from the \texttt{gstat} package to fit the appropriate nugget and sill parameters, select the best theoretical model, and fit a kriging model.
+%	\end{itemize}
+%\end{frame}
 
 \begin{frame}
 	\frametitle{Spatial Gaussian Copula}
 	\begin{itemize}
-	\item Copulas are multivariate cumulative distribution functions where each variable has a standard uniform marginal distribution.
-	\item An important copula result is Sklar's Theorem:
+	\item Copulas are multivariate cumulative distribution functions where each variable has a standard uniform marginal distribution
+	\item An important copula result:
 	\end{itemize}
-	\begin{theorem}	
+	\begin{theorem}[Sklar]
 	Any $n$-dimensional multivarite cumulative distribution function $G(\vec{X})$ of a random vector $\vec{X} = (X_1, \ldots ,X_n)$ can be expressed in terms of the marginal cumulative distribution functions $F_i(X_i)$ and a copula function $C: [0,1]^n \rightarrow [0,1]$ such that
 		\begin{align*}
 			G(\vec{X}) = C(F_1(X_1), \ldots, F_n(X_n))
@@ -145,7 +139,7 @@
 	g(\vec{V}) = \| \Sigma \|^{1/2} \text{exp}\left(-\frac{1}{2} z^T (\Sigma^{-1} - I_n) z\right) \prod_{i = 1}^m f_i(y_i)
 	$$
 where $z = (\Phi^{-1}(F_1(y_1)), \ldots, \Phi^{-1}(F_n(y_n)))$.
-	\item This copula will be able to incorporate the spatial dependency structure, however this method requires the appropriate selection of $F$ and $\Sigma$.
+	\item This copula will be able to incorporate the spatial dependency structure with the appropriate selection of $F$ and $\Sigma$.
 	\end{itemize}
 \end{frame}
 
@@ -165,7 +159,7 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 \begin{frame}
 	\frametitle{Marginal Distributions for Copula Model}
 	An appropriate $F$ function would be one which can handle semicontinuous data.
-	We have chosen to use a zero-inflated gamma function on cube-root transformed response data.
+	Previous work used a zero-inflated gamma function on cube-root transformed response data.
 	\begin{align*}
 	&f(x) = 
 	\begin{cases}
@@ -176,29 +170,30 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 	&\text{where } p \sim \text{Bernoulli}(\pi)
 	\end{align*}
 	\begin{itemize}
-	\item The cube root transformation was necessary to make the continuous component less heavily skewed.
-	\item Additionally, for the purposes of the copula model, zero values were instead replaced with uniform random variables sampled from a $U(0, \epsilon)$ distribution where $\epsilon$ is the smallest nonzero value in the observed dataset.
+	\item The cube root transformation was used to make the continuous component less skewed
+	\item Zero values were transformed to uniform random variables sampled from a $U(0, \epsilon)$ distribution where $\epsilon$ is the smallest nonzero value in the observed dataset
 	\end{itemize}
 \end{frame}
 
 \begin{frame}
 	\frametitle{Spatial Random Forests}
 	\begin{itemize}
-		\item The random forest is a machine learning algorithm which creates an ensemble of weak decision tree learners from bootstrapped (also referred to as \textit{bagged}) samples of the original data\cite{breiman01}.
-		\item Random forest have been used in spatial prediction, but the spatial information is often disregarded\cite{hengl18}.
-		\item One of the notable advantages of using a machine learning algorithm like random forests is that no statistical assumptions are required, therefore, we are not required to transform the shape of the data as we had to in the Gaussian copula model.
+		\item The generic random forest is popular a machine learning algorithm which creates an ensemble of decision trees from the original data using \textit{bootstrap aggregation} and \textit{feature bagging}
+		\item One of the notable advantages of using a machine learning algorithm like random forests is that no statistical assumptions are required
+		\item Random forests have been used in spatial prediction, but the spatial information is often disregarded\cite{hengl18}.
 	\end{itemize}
 \end{frame}
 
 \begin{frame}
 	\frametitle{Spatial Random Forests}
 	\begin{itemize}
-		\item In order to incorporate this information in the model, the \textbf{RFsp} packages introduces the spatial random forest which uses buffer distances from observed points as explanatory variables.
-		\item The generic spatial random forest system is proposed in terms of three main input components:
+		\item The \textbf{RFsp} \texttt{R} package (built on top of \textbf{ranger}) introduces the spatial random forest:
 		\begin{align*}
 		Y(s) = f(X_G, X_R, X_P)
 		\end{align*}
-		where $X_G$ are covariates based on geographic proximity or spatial relationships, and $X_R$ and $X_P$ are referred to respectively as surface reflectance covariates and process-based covariates.
+		where $X_G$ are covariates based on geographic proximity, and $X_R$ are surface reflectance covariates, and $X_P$ and process-based covariates
+		\item Essentially, spatial dependence is modeled by training the random forest on distances from the training points
+		\item Buffer distances between points was calculated in meters using \texttt{raster::pointDistances}
 	\end{itemize}
 \end{frame}
 
@@ -209,33 +204,56 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 	\begin{enumerate}
 		\item Spatial Gaussian copula with ZIG marginal distributions
 		\item Ordinary kriging via \texttt{automap}
-		\item Several spatial random forests with varying $n.trees = 50, 100, 150$
-		\item Semicontinuous corrected kriging and spatial random forests where predicted values smaller than the smallest nonzero training observation are converted to 0
+		\item Several spatial random forests with varying $num.trees = 50, 100, 150$
+		\item \textit{Zero-corrected} kriging and spatial random forests where predicted values smaller than the smallest nonzero training observation are converted to 0
 	\end{enumerate}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Model Comparison Scenarios}
+	We investigated three scenarios in our simulation:
+	\begin{enumerate}
+		\item Predicting simulated total volume with only spatial information
+		\item Predicting simulated hemlock volume with only spatial information
+		\item Predicting total volume with spatial information and annual precipitation using resampled data
+	\end{enumerate}
+	We will also examine how changes in the size of the training set affect the accuracy for different methods with $n = 100, 200, 300, 500, 1000, 1200$.
 	\begin{itemize}
-		\item Testing will be done on simulated total volume and hemlock volume, as well as the resampled original data.
-		\item Hemlock data was of particular study interest since nearly \textbf{56\%} of its original values were zeros, possibly representing a more significant challenge to model than total volume which had \textbf{24.3\%} zeros.
-		\item We will also examine how changes in the size of the training set affect the accuracy for different methods with $n = 100, 200, 300, 500, 1000, 1200$.
+		\item Hemlock data was of particular study interest since nearly \textbf{56\%} of its original values were zeros, whereas total volume had \textbf{24.3\%} zeros.
 	\end{itemize}
 \end{frame}
 
 \begin{frame}
-	\frametitle{Metrics: RMSPE}
-		Our first prediction metric is root mean squared error
+	\frametitle{Model Comparison Metrics}
+	We used three prediction metrics to compare the performance of the models in each scenario:
+	\begin{enumerate}
+		\item Root Mean Squared Prediction Error (RMSPE)
 		$$
 		RMSPE = \sqrt{\frac{1}{mR} \sum_{r=1}^R \sum_{j=1}^m (\hat{y}_{j|r} - y_{j|r})^2}
 		$$
-		where lower values are preferable to higher ones
+		\item Signed Relative Bias (SRB)
+		\item Prediction Interval Coverage ($PIC_{90}$)
+	\end{enumerate}
+	We will also examine residual plots and prediction performance for zero valued observations.
 \end{frame}
+
+%\begin{frame}
+%	\frametitle{Metrics: RMSPE}
+%		Our first prediction metric is root mean squared error
+%		$$
+%		RMSPE = \sqrt{\frac{1}{mR} \sum_{r=1}^R \sum_{j=1}^m (\hat{y}_{j|r} - y_{j|r})^2}
+%		$$
+%		where lower values are preferable to higher ones
+%\end{frame}
 
 \begin{frame}
 	\frametitle{Metrics: Signed Relative Bias}
 	\begin{align*}
-	SRB = \text{sign}(\tau) \sqrt{\frac{\tau^2}{MSPE - \tau^2}}
+		SRB &= \text{sign}(\tau) \sqrt{\frac{\tau^2}{MSPE - \tau^2}} \\
+		\text{where }\tau &= \frac{1}{mR} \sum_{r = 1}^R \sum_{j = 1}^m (\hat{y}_{j|r} - y_{j|r})
 	\end{align*}
-	where $\tau = \frac{1}{mR} \sum_{r = 1}^R \sum_{j = 1}^m (\hat{y}_{j|r} - y_{j|r})$.
 	\begin{itemize}
-		\item This formula derives from the fact that mean squared prediction error is equal to the bias of the estimate squared plus the variance of the estimate.
+		\item This formula derives from the fact that MSE is equal to the bias of the estimate squared plus the variance of the estimate
 		\item A smaller absolute value of SRB indicates smaller bias in the method with a negative value indicating underprediction and a positive value indicating overprediction.\cite{verhoef13}
 	\end{itemize}
 \end{frame}
@@ -243,7 +261,7 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 \begin{frame}
 	\frametitle{Metrics: 90\% Predictive Interval Coverage}
 	\begin{align*}
-	PIC_{90} = \frac{1}{mR} \sum_{r=1}^R \sum_{j=1}^m I\left(\hat{y}_{j|r} - 1.645\hat{\text{se}}(\hat{y}_{j|r}) \geq y_{j|r} \cap y_{j|r} \leq \hat{y}_{j|r} + 1.645\hat{\text{se}}(\hat{y}_{j|r})\right)
+		PIC_{90} = \frac{1}{mR} \sum_{r=1}^R \sum_{j=1}^m \text{I}\left(y_{j|r} \in \hat{y}_{j|r} \pm 1.645\hat{\text{se}}(\hat{y}_{j|r}) \right)
 	\end{align*}
 	where $\hat{\text{se}}(\hat{y}_{j|r})$ is the standard error of all the predicted values $\hat{y}_{j|r}$ in resampled dataset $r$.\cite{verhoef13}
 	\begin{itemize}
@@ -256,20 +274,21 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 \begin{frame}
 	\frametitle{RMSPE of Simulated Total Timber Volume}
 	\begin{center}
-	\begin{tabular}{|| c | c c c c c c c ||}
-	\hline
-	\multicolumn{8}{||c||}{Simulated Total Volume} \\
-	\hline
-	$n$ & Copula & Kriging & $RFsp_{150}$ & $RFsp_{100}$ & $RFsp_{50}$ & $RFsp_{150}(zeros)$ & Kriging (zeros) \\ [.5ex] 
-	\hline\hline
-	$1200$ & 246.139 & 238.878 & 251.040 & 250.719 & \cellcolor{gray}252.216 & 251.042 & \cellcolor{cyan}238.868 \\
-	$1000$ & \cellcolor{gray}264.614 & 248.749 & 256.095 & 256.304 & 257.337 & 256.116 & \cellcolor{cyan}248.721 \\
-	$500$ & 254.933 & 243.617 & 253.945 & 254.267 & \cellcolor{gray}255.217 & 253.957 & \cellcolor{cyan}243.604 \\
-	$300$ & \cellcolor{gray}264.614 & 248.749 & 256.095 & 256.304 & 257.337 & 256.116 & \cellcolor{cyan}248.721 \\
-	$200$ & \cellcolor{gray}275.154 & 253.674 & 258.074 & 258.246 & 259.417 & 258.113 & \cellcolor{cyan}253.628 \\
-	$100$ & \cellcolor{gray}298.042 & 268.752 & \cellcolor{cyan}266.179 & 266.376 & 267.221 & 266.260 & 268.717 \\ [.5ex] 
-	\hline
-	\end{tabular}
+		\resizebox{\textwidth}{!}{%
+		\begin{tabular}{|| c | c c c c c c c ||}
+		\hline
+		\multicolumn{8}{||c||}{Simulated Total Volume} \\
+		\hline
+		$n$ & Copula & Kriging & $RFsp_{150}$ & $RFsp_{100}$ & $RFsp_{50}$ & $RFsp_{150}(zeros)$ & Kriging (zeros) \\ [.5ex] 
+		\hline\hline
+		$1200$ & 246.139 & 238.878 & 251.040 & 250.719 & \cellcolor{gray}252.216 & 251.042 & \cellcolor{cyan}238.868 \\
+		$1000$ & \cellcolor{gray}264.614 & 248.749 & 256.095 & 256.304 & 257.337 & 256.116 & \cellcolor{cyan}248.721 \\
+		$500$ & 254.933 & 243.617 & 253.945 & 254.267 & \cellcolor{gray}255.217 & 253.957 & \cellcolor{cyan}243.604 \\
+		$300$ & \cellcolor{gray}264.614 & 248.749 & 256.095 & 256.304 & 257.337 & 256.116 & \cellcolor{cyan}248.721 \\
+		$200$ & \cellcolor{gray}275.154 & 253.674 & 258.074 & 258.246 & 259.417 & 258.113 & \cellcolor{cyan}253.628 \\
+		$100$ & \cellcolor{gray}298.042 & 268.752 & \cellcolor{cyan}266.179 & 266.376 & 267.221 & 266.260 & 268.717 \\ [.5ex] 
+		\hline
+		\end{tabular}}
 	\vspace{.06cm}
 
 	\textit{Cyan indicates lowest RMSPE for sample size; gray indicates highest RMSPE.}
@@ -279,6 +298,7 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 \begin{frame}
 	\frametitle{RMSPE: Simulated Hemlock Volume}
 	\begin{center}
+		\resizebox{\textwidth}{!}{%
 		\begin{tabular}{|| c | c c c c c c c ||}
 		\hline
 		\multicolumn{8}{||c||}{Simulated Hemlock Volume} \\
@@ -292,13 +312,14 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 		$200$ & \cellcolor{gray}52.030 & 50.139 & 51.161 & 51.192 & 51.396 & 51.161 & \cellcolor{cyan}50.123 \\
 		$100$ & \cellcolor{gray}52.542 & 51.560 & 51.671 & 51.679 & 51.911 & 51.671 & \cellcolor{cyan}51.546 \\ [.5ex] 
 		\hline
-		\end{tabular}
+		\end{tabular}}
 	\end{center}
 \end{frame}
 
 \begin{frame}
 	\frametitle{RMSPE: Resampled Total Volume}
 	\begin{center}
+		\resizebox{\textwidth}{!}{%
 		\begin{tabular}{|| c | c c c c c c c ||}
 		\hline
 		\multicolumn{8}{||c||}{Resampled Total Volume} \\
@@ -312,7 +333,7 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 		$200$ & \cellcolor{gray}308.267 & 304.898 & \cellcolor{cyan}303.921 & 304.393 & 305.360 & 303.922 & 304.867 \\
 		$100$ & \cellcolor{gray}313.791 & 305.210 & \cellcolor{cyan}309.662 & 310.072 & 310.971 & 309.669 & 305.159 \\ [.5ex] 
 		\hline
-		\end{tabular}
+		\end{tabular}}
 	\end{center}
 \end{frame}
 
@@ -321,6 +342,7 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 \begin{frame}
 	\frametitle{SRB: Resampled Total Volume}
 	\begin{center}
+		\resizebox{\textwidth}{!}{%
 		\begin{tabular}{|| c | c c c c c c c ||}
 		\hline
 		\multicolumn{8}{||c||}{Simulated Total Volume} \\
@@ -334,13 +356,14 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 		$200$ & \cellcolor{gray}-.194 & \cellcolor{cyan}.000 & -.001 & -.001 & -.001 & -.002 & \cellcolor{cyan}.000 \\
 		$100$ & \cellcolor{gray}-.134 & .006 & .003 & .003 & .003 & \cellcolor{cyan}.001 & .006 \\ [.5ex] 
 		\hline
-		\end{tabular}
+		\end{tabular}}
 	\end{center}
 \end{frame}
 
 \begin{frame}
 	\frametitle{SRB: Simulated Hemlock Volume}
 	\begin{center}
+		\resizebox{\textwidth}{!}{%
 		\begin{tabular}{|| c | c c c c c c c ||}
 		\hline
 		\multicolumn{8}{||c||}{Simulated Hemlock Volume} \\
@@ -354,13 +377,14 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 		$200$ & \cellcolor{gray}-.189 & .002 & -.002 & \cellcolor{cyan}-.001 & \cellcolor{cyan}-.001 & -.002 & .003 \\
 		$100$ & \cellcolor{gray}-.182 & .011 & \cellcolor{cyan}.002 & .003 & .003 & \cellcolor{cyan}.002 & .012 \\ [.5ex] 
 		\hline
-		\end{tabular}
+		\end{tabular}}
 	\end{center}
 \end{frame}
 
 \begin{frame}
 	\frametitle{SRB: Resampled Total Timber Data}
 	\begin{center}
+		\resizebox{\textwidth}{!}{%
 		\begin{tabular}{|| c | c c c c c c c ||}
 		\hline
 		\multicolumn{8}{||c||}{Resampled Total Volume} \\
@@ -374,60 +398,60 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 		$200$ & \cellcolor{gray}-.282 & \cellcolor{cyan}.000 & .012 & .013 & .014 & .012 & \cellcolor{cyan}.000 \\
 		$100$ & \cellcolor{gray}-.260 & \cellcolor{cyan}.007 & .008 & .008 & .009 & .008 & \cellcolor{cyan}.007 \\ [.5ex] 
 		\hline
-		\end{tabular}
+		\end{tabular}}
 	\end{center}
 \end{frame}
 
 \subsubsection{Residual Plots}
 
-\begin{frame}
-	\frametitle{Residual Plots}
-	\begin{itemize}
-		\item We produced residual plots for the Gaussian copula, kriging, and random forests with $num.trees=150$ in each of the simulation scenarios with sample size $n = 500$.
-		\item The dotted line on each plot corresponds indicates a predicted value of 0.
-		\item We see that regardless of model or simulation method, $\hat{y}$ tended to underestimate large values of the observed response.
-	\end{itemize}
-\end{frame}
+%\begin{frame}
+%	\frametitle{Residual Plots}
+%	\begin{itemize}
+%		\item We produced residual plots for the Gaussian copula, kriging, and random forests with $num.trees=150$ in each of the simulation scenarios with sample size $n = 500$
+%		\item The dotted line on each plot corresponds indicates a predicted value of 0
+%		\item We see that regardless of model or simulation method, $\hat{y}$ tended to underestimate large values of the observed response
+%	\end{itemize}
+%\end{frame}
 
 \begin{frame}
-	\frametitle{Residual Plots}
+	\frametitle{Total Volume Residual Plots}
 	\begin{figure}[h]
 		\centering
-		\includegraphics[scale=.7]{residual_plots}
+		\includegraphics[scale=.5]{residual_plots}
 		\caption{\label{fig:total_resids}Total volume residual plots}
 	\end{figure}
-	\begin{itemize}
-		\item The residual plots in figure \ref{fig:total_resids} are similar for the most part.
-		\item There is a distinct line for the zero predicted values in the copula model whereas the kriging model predicted some negative values.
-	\end{itemize}
+	%\begin{itemize}
+		%\item The residual plots in figure \ref{fig:total_resids} are similar for the most part.
+		%\item There is a distinct line for the zero predicted values in the copula model whereas the kriging model predicted some negative values.
+	%\end{itemize}
 \end{frame}
 
 \begin{frame}
-	\frametitle{New Spatial Models}
+	\frametitle{Hemlock Residual Plots}
 	\begin{figure}[h]
 		\centering
-	\includegraphics[scale=.7]{tshevol_residual_plots}
+	\includegraphics[scale=.5]{tshevol_residual_plots}
 	\caption{\label{fig:hemlock_resids}Hemlock volume residual plots}
 	\end{figure}
-	\begin{itemize}
-	\item Figure \ref{fig:hemlock_resids} suggests that random forests produce residuals with higher variance than either the other models.
-	\item While copula and kriging produced residual plots with almost rectangular shapes, random forests produced residuals that looked more like a cloud of points, particularly with observed values around 500.
-	\end{itemize}
+	%\begin{itemize}
+	%\item Figure \ref{fig:hemlock_resids} suggests that random forests produce residuals with higher variance than either the other models.
+	%\item While copula and kriging produced residual plots with almost rectangular shapes, random forests produced residuals that looked more like a cloud of points, particularly with observed values around 500.
+	%\end{itemize}
 \end{frame}
 
 
 \begin{frame}
-	\frametitle{New Spatial Models}
+	\frametitle{Total Volume Residual Plots (Resampled)}
 	\begin{figure}[h]
 		\centering
-	\includegraphics[scale=.7]{resampling_residual_plots}
+	\includegraphics[scale=.5]{resampling_residual_plots}
 	\caption{\label{fig:resamp_resids}Resampled total volume residual plots}
 	\end{figure}
-	\begin{itemize}
-	\item Figure \ref{fig:resamp_resids} shows that random forests have the widest residual spread which is relatively homoskedastic as observed values increase.
-	\item This contrasts with kriging residuals which appears as a narrowing funnel as observed values increases.
-	\item The kriging residuals also produced some predictions near zero, even for large values.
-	\end{itemize}
+	%\begin{itemize}
+	%\item Figure \ref{fig:resamp_resids} shows that random forests have the widest residual spread which is relatively homoskedastic as observed values increase.
+	%\item This contrasts with kriging residuals which appears as a narrowing funnel as observed values increases.
+	%\item The kriging residuals also produced some predictions near zero, even for large values.
+	%\end{itemize}
 \end{frame}
 
 \subsubsection{Prediction Interval Coverage}
@@ -460,28 +484,25 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 
 \begin{frame}
 	\frametitle{Prediction of zero values}
-	In the resampled data study with $n = 500$, we also calculated RMSPE and median predictions among the different methods for points with an observed value of 0.
+	In the resampled data study with $n = 500$, we also calculated RMSPE and median predictions for points with an observed value of 0.
 	\begin{figure}[h]
 		\centering
-	\includegraphics[scale=.7]{zero_yhats}
+	\includegraphics[scale=.5]{zero_yhats}
 	\caption{\label{fig:zero_yhats}Predictions for zero values}
 	\end{figure}
-\end{frame}
-\begin{frame}
-	\frametitle{Prediction of zero values}
-	Figure \ref{fig:zero_yhats} displays the histograms of the predicted values for the Gaussian copula, zero-corrected random forest, and zero-corrected universal kriging. 
-		\begin{center}
-		\begin{tabular}{|| c | c | c | c | c | c ||}
-		\hline
-		\multicolumn{3}{||c|}{Median $\hat{y}$} &
-		\multicolumn{3}{c||}{RMSPE} \\
-		\hline
-		Copula & $RFsp_{150}$(zeros) & Kriging(zeros)& Copula & $RFsp_{150}$(zeros) & Kriging(zeros)\\
-		\hline
-		\cellcolor{cyan}0 & 61.3 & \cellcolor{gray}131 & \cellcolor{cyan}115 & 170 & \cellcolor{gray}201 \\
-		\hline
-		\end{tabular}
-		\end{center}
+	\begin{center}
+		\resizebox{\textwidth}{!}{%
+	\begin{tabular}{|| c | c | c | c | c | c ||}
+	\hline
+	\multicolumn{3}{||c|}{Median $\hat{y}$} &
+	\multicolumn{3}{c||}{RMSPE} \\
+	\hline
+	Copula & $RFsp_{150}$(zeros) & Kriging(zeros)& Copula & $RFsp_{150}$(zeros) & Kriging(zeros)\\
+	\hline
+	\cellcolor{cyan}0 & 7.49 & \cellcolor{gray}40.5 & \cellcolor{cyan}20.7 & 59.6 & \cellcolor{gray}62.4 \\
+	\hline
+	\end{tabular}}
+	\end{center}
 \end{frame}
 
 \section{Conclusion}

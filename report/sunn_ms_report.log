@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2020.5.4)  1 JUN 2020 18:58
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2020.5.4)  4 JUN 2020 09:29
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -559,21 +559,21 @@ File: ./images/timber_annpre.png Graphic file (type png)
 Package pdftex.def Info: ./images/timber_annpre.png  used on input line 83.
 (pdftex.def)             Requested size: 469.75502pt x 209.0483pt.
  [3 <./images/timber_annpre.png (PNG copy)>]
-<./images/semivariogram_annpre.png, id=29, 627.09282pt x 521.69907pt>
+<./images/semivariogram_annpre.png, id=31, 627.09282pt x 521.69907pt>
 File: ./images/semivariogram_annpre.png Graphic file (type png)
 <use ./images/semivariogram_annpre.png>
-Package pdftex.def Info: ./images/semivariogram_annpre.png  used on input line 131.
+Package pdftex.def Info: ./images/semivariogram_annpre.png  used on input line 129.
 (pdftex.def)             Requested size: 188.10059pt x 156.49014pt.
  [4] [5 <./images/semivariogram_annpre.png>] [6] [7] [8] [9] [10]
 <./images/residual_plots.png, id=58, 564.60938pt x 268.00125pt>
 File: ./images/residual_plots.png Graphic file (type png)
 <use ./images/residual_plots.png>
-Package pdftex.def Info: ./images/residual_plots.png  used on input line 434.
+Package pdftex.def Info: ./images/residual_plots.png  used on input line 433.
 (pdftex.def)             Requested size: 395.22386pt x 187.59958pt.
 <./images/tshevol_residual_plots.png, id=59, 564.60938pt x 268.00125pt>
 File: ./images/tshevol_residual_plots.png Graphic file (type png)
 <use ./images/tshevol_residual_plots.png>
-Package pdftex.def Info: ./images/tshevol_residual_plots.png  used on input line 443.
+Package pdftex.def Info: ./images/tshevol_residual_plots.png  used on input line 442.
 (pdftex.def)             Requested size: 395.22386pt x 187.59958pt.
 
 
@@ -582,7 +582,7 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 <./images/resampling_residual_plots.png, id=60, 564.60938pt x 268.00125pt>
 File: ./images/resampling_residual_plots.png Graphic file (type png)
 <use ./images/resampling_residual_plots.png>
-Package pdftex.def Info: ./images/resampling_residual_plots.png  used on input line 452.
+Package pdftex.def Info: ./images/resampling_residual_plots.png  used on input line 451.
 (pdftex.def)             Requested size: 395.22386pt x 187.59958pt.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
@@ -591,7 +591,7 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 <./images/zero_yhats.png, id=70, 602.25pt x 225.84375pt>
 File: ./images/zero_yhats.png Graphic file (type png)
 <use ./images/zero_yhats.png>
-Package pdftex.def Info: ./images/zero_yhats.png  used on input line 496.
+Package pdftex.def Info: ./images/zero_yhats.png  used on input line 495.
 (pdftex.def)             Requested size: 421.57211pt x 158.08954pt.
  [13 <./images/zero_yhats.png>] [14] (./sunn_ms_report.aux)
 Package logreq Info: Writing requests to 'sunn_ms_report.run.xml'.
@@ -607,7 +607,7 @@ Here is how much of TeX's memory you used:
  59 hyphenation exceptions out of 8191
  45i,17n,45p,836b,1184s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmcsc10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on sunn_ms_report.pdf (14 pages, 420247 bytes).
+Output written on sunn_ms_report.pdf (14 pages, 420204 bytes).
 PDF statistics:
  143 PDF objects out of 1000 (max. 8388607)
  93 compressed objects within 1 object stream

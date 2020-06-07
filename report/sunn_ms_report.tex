@@ -94,14 +94,12 @@ This will be valuable in determining model performance when spatial correlation 
 These simulations will compare the predictive performance of spatial Gaussian copula, spatial random forest, and kriging in different scenarios and sample sizes.
 
 \subsection{Kriging}
-In geostatistics, kriging is a method of spatial interpolation where values at unobserved locations are estimated using a weighted sum of known values.
-In many regards, kriging is very similar in principle to regression analysis.
-In particular, if the data is normally distributed and satisfies \textit{second order stationarity}, this is, if the covariances of points is a function only of the distance between the points and not the specific physical location of the points themselves, then kriging is the \textit{best linear unbiased estimator}\cite{cressie93}.
-The weights $w$ obtained by kriging are unbiased and minimize estimation variance.
+In geostatistics, kriging is a method of spatial interpolation where values at unobserved locations are estimated using a weighted sum of known values
 \begin{align*}
-	\hat{z}(x_0) = \sum_{i=1}^{N} w_i z(x_i)
+	\hat{z}(u_\alpha) = \sum_{i=1}^{N} w_i z(u_i)
 \end{align*}
-where $x_0$ is the point to be predicted and $z(x_i)$ are the observed points.
+where $u_\alpha$ is the point to be predicted, $z(u_i)$ are the observed points, and $w_i$ are the weights of those points.
+If the data is normally distributed and satisfies \textit{second order stationarity} \textit{i.e.} the covariances of points is a function only of the distance between the points and not the specific location of the points themselves, then kriging is the \textit{best linear unbiased estimator}\cite{cressie93}.
 
 If the response at point $u_\alpha$ is defined as the function $Z(u_\alpha)$, covariance between points is estimated using the sample semivariogram which is defined for a lag distance $h$ as
 \begin{align*}
@@ -187,7 +185,8 @@ In this paper, we have chosen to use a zero-inflated gamma (ZIG) function on cub
 &\text{where } p \sim \text{Bernoulli}(\pi)
 \end{align*}
 The cube root transformation makes the continuous component less heavily skewed.
-Additionally, for the purposes of the copula model, zero values were instead replaced with uniform random variables sampled from a $U(0, \epsilon)$ distribution where $\epsilon$ is the smallest nonzero value in the observed dataset.
+Additionally, zero values were replaced with random observations sampled from a $U(0, \epsilon)$ distribution where $\epsilon$ is the smallest nonzero value in the observed dataset.
+This was to avoid numerical issues while doing matrix computations on the covariance matrices.
 
 The complete spatial Gaussian copula algorithm used here is detailed below:
 
