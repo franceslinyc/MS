@@ -178,11 +178,9 @@ In this paper, we have chosen to use a zero-inflated gamma (ZIG) function on cub
 \begin{align*}
 &f(x) = 
 \begin{cases}
-	0 & \text{ w.p } p \\
-	\frac{1}{\Gamma(\alpha) \beta^\alpha} x^{\alpha -1} \text{exp}\left(-\frac{x}{\beta}\right) & \text{ w.p. } 1 - p 
+	0 & \text{ w.p } \pi \\
+	\frac{1}{\Gamma(\alpha) \beta^\alpha} x^{\alpha -1} \text{exp}\left(-\frac{x}{\beta}\right) & \text{ w.p. } 1 - \pi 
 \end{cases} 
-\\
-&\text{where } p \sim \text{Bernoulli}(\pi)
 \end{align*}
 The cube root transformation makes the continuous component less heavily skewed.
 Additionally, zero values were replaced with random observations sampled from a $U(0, \epsilon)$ distribution where $\epsilon$ is the smallest nonzero value in the observed dataset.
@@ -283,7 +281,7 @@ A smaller absolute value of SRB indicates smaller bias in the method with a nega
 
 Our final prediction metric is 90\% \textit{prediction interval coverage} for each of the methods:
 \begin{align*}
-PIC_{90} = \frac{1}{mR} \sum_{r=1}^R \sum_{j=1}^m I\left(\hat{y}_{j|r} - 1.645\hat{\text{se}}(\hat{y}_{j|r}) \geq y_{j|r} \cap y_{j|r} \leq \hat{y}_{j|r} + 1.645\hat{\text{se}}(\hat{y}_{j|r})\right)
+PIC_{90} = \frac{1}{mR} \sum_{r=1}^R \sum_{j=1}^m I\left(\hat{y}_{j|r} - 1.645\hat{\text{se}}(\hat{y}_{j|r}) \leq y_{j|r} \cap y_{j|r} \leq \hat{y}_{j|r} + 1.645\hat{\text{se}}(\hat{y}_{j|r})\right)
 \end{align*}
 where $\hat{\text{se}}(\hat{y}_{j|r})$ is the standard error of all the predicted values $\hat{y}_{j|r}$ in resampled dataset $r$.\cite{verhoef13}
 $PIC_{90}$ captures the proportion of actual values for the unobserved points fall within their respective 90\% prediction intervals.

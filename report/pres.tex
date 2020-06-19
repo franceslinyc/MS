@@ -1,10 +1,12 @@
 \documentclass{beamer}
-\usetheme{Boadilla}
+\usetheme{default}
+\usecolortheme{beaver}
 \usepackage{amsmath}
 \usepackage{multirow}
 \usepackage{color, colortbl}
 \usepackage{caption}
 \usepackage{graphicx}
+\usepackage[ruled,vlined]{algorithm2e}
 \graphicspath{{./images/}}
 \usepackage[backend=biber, bibencoding=utf8]{biblatex}
 \addbibresource{ref.bib}
@@ -12,7 +14,7 @@
 \definecolor{gray}{gray}{.7}
 
 \title{Comparison of Gaussian copula and random forests}
-\subtitle{in zero-inflated spatial prediction}
+\subtitle{in zero-inflated spatial prediction for forestry applications}
 \author{Nick Sun}
 \institute{Oregon State University, Department of Statistics}
 \date{\today}
@@ -23,9 +25,9 @@
 \titlepage
 \end{frame}
 
-\begin{frame}{Outline}
-	\tableofcontents
-\end{frame}
+%\begin{frame}{Outline}
+	%\tableofcontents
+%\end{frame}
 
 \section{Introduction}
 \begin{frame}
@@ -33,14 +35,16 @@
 \begin{itemize}
 	\item Forestry inventory is a critical part of monitoring and servicing ecosystems and often involves statistical estimation of quantities such as total wood volume
 	\item Since forests can cover enormous areas over rough terrain, it is often not possible to sample certain areas of forests due to physical, budgetary, or time constraints
-	\item However, forestry data is often zero-inflated, heavily skewed, and spatially dependent, making it difficult to model using traditional statistical and geostatistical models
+	\item However, forestry data is often zero-inflated, heavily skewed, and spatially dependent, making it difficult to model using traditional statistical models
 \end{itemize}
 \end{frame}
 
 \begin{frame}
 	\frametitle{Original Forestry Data}
 	\begin{itemize}
-		\item  The forestry inventory data used here was made available by the USDA Forestry Inventory and Analysis program, containing 13 variables of interest across 1224 plots of land in northwest Oregon.
+		\item The forestry inventory data was made available by the USDA, containing 13 variables of interest across 1224 plots of land in northwest Oregon.
+		\item Response variables include total timber volume, NDVI, etc.
+		\item Possible explanatory variables include annual precipitation, temperature, lat-long, etc.
 	\end{itemize}
 	\begin{center}
 		\begin{figure}
@@ -52,18 +56,19 @@
 
 \begin{frame}
 	\frametitle{Simulated Data}
-	We simulated $m=1000$ datasets of size $n=1224$ for total timber volume and hemlock volume, two common variables of interest in forestry inventory applications.
-	Previous work used a zero-inflated Gamma distribution to model these variables\cite{madsen09}.
-	\begin{itemize}
-		\item We create simulated datasets by generating multivariate normal observations with the sample correlation matrix from the original data
-		\item We then backtransform using the quantile function of the zero-inflated gamma function that was found to fit the original data
-	\end{itemize}
+	Using the original data, we simulated $m=1000$ datasets of size $n=1224$ for total timber volume and hemlock volume, two common variables of interest in forestry inventory applications.
+	Previous work used a zero-inflated Gamma (ZIG) distribution to model these variables\cite{madsen09}.
+	\begin{enumerate}
+		\item Generate random standard multivariate normal vectors with the sample correlation matrix from the original data
+		\item Use probability integral transform to convert standard normals to standard uniforms
+		\item Finally, backtransform using the quantile function of the ZIG that was found to fit the original data
+	\end{enumerate}
 \end{frame}
 
 \begin{frame}
 	\frametitle{Resampled Data}
 	\begin{itemize}
-		\item We also generate training datasets by sampling rows without replacement from the orignal data with the remaining rows serving as a test set
+		\item We also generate training datasets by sampling rows without replacement from the original data with the remaining rows serving as a test set
 		\item For models trained on these resampled datasets, we will be able to use covariates present in the Oregon dataset in our models, such as average annual precipitation
 	\end{itemize}
 	\begin{center}
@@ -74,34 +79,42 @@
 	\end{center}
 \end{frame}
 
+\section{Methods}
 \begin{frame}
 	\frametitle{New Spatial Models}
-	\begin{itemize}
-		\item Two new techniques have been proposed to estimate spatially dependent data: spatial Gaussian copula and spatial random forests
-		\item These simulations will compare the predictive performance of these new models and traditional kriging in different spatial prediction scenarios
+		\textbf{Big question:} Supposed we observe some values. How can we use this data to estimate values at unobserved locations?
+		\vspace{.2cm}
+
+		Two new techniques have been proposed to model and predict spatially dependent data:
+	\begin{itemize} 
+		\item Spatial random forests \textit{(Hengl et. al 2018)}
+		\item Spatial Gaussian copula \textit{(Madsen 2009)}
 	\end{itemize}
+		We will compare the predictive performance of these new models alongside traditional kriging in different spatial prediction scenarios
 \end{frame}
 
 \begin{frame}
 	\frametitle{Kriging}
 	\begin{itemize}
 		\item In geostatistics, kriging is a method of spatial interpolation where values at unobserved locations are estimated using a weighted sum of known values
-		\item In particular, if the data is normally distributed and satisfies \textit{second order stationarity}, \textit{i.e.} the covariances of points is a function only of the distance between the points and not the specific physical location of the points themselves, then kriging is the \textit{best linear unbiased estimator}\cite{cressie93}
+		\begin{align*}
+			\hat{y}_{K}(s_0) = w(s_0)^T y
+		\end{align*}
+		\item In particular, if the data satisfies \textit{second order stationarity}, \textit{i.e.} the covariances of points is a function only of the distance between the points and not the specific physical location of the points themselves, then kriging is the \textit{best linear unbiased estimator}\cite{cressie93}
 	\end{itemize}
-	\begin{align*}
-		\hat{y}_{K}(s_0) = w(s_0)^T y
-	\end{align*}
 \end{frame}
 
-
-%\begin{frame}
-%	\frametitle{Kriging Primer}
-%	Kriging is often thought of as a two-step process where:
-%	\begin{enumerate}
-%		\item Spatial covariance is determined by fitting a \textit{theoretical variogram} to the \textit{experimental variogram}
-%		\item Observation weights are calculated using this covariance structure and used to interpolate or predict unobserved points
-%	\end{enumerate}
-%\end{frame}
+\begin{frame}
+	\frametitle{Kriging}
+	Kriging is often thought of as a two-step process where:
+	\begin{enumerate}
+		\item Spatial covariance is determined by fitting a \textit{theoretical variogram} to the \textit{experimental variogram}
+			\begin{center}
+			\includegraphics[width=.4\textwidth]{semivariogram_annpre}
+		\end{center}
+		\item Observation weights are calculated using this covariance structure and used to interpolate or predict unobserved points
+	\end{enumerate}
+\end{frame}
 
 %\begin{frame}
 %	\frametitle{Kriging Primer}
@@ -110,70 +123,6 @@
 %	\item For the purposes of this simulation study, the \texttt{automap} package will be used which relies on restricted maximum likelihood methods from the \texttt{gstat} package to fit the appropriate nugget and sill parameters, select the best theoretical model, and fit a kriging model.
 %	\end{itemize}
 %\end{frame}
-
-\begin{frame}
-	\frametitle{Spatial Gaussian Copula}
-	\begin{itemize}
-	\item Copulas are multivariate cumulative distribution functions where each variable has a standard uniform marginal distribution
-	\item An important copula result:
-	\end{itemize}
-	\begin{theorem}[Sklar]
-	Any $n$-dimensional multivarite cumulative distribution function $G(\vec{X})$ of a random vector $\vec{X} = (X_1, \ldots ,X_n)$ can be expressed in terms of the marginal cumulative distribution functions $F_i(X_i)$ and a copula function $C: [0,1]^n \rightarrow [0,1]$ such that
-		\begin{align*}
-			G(\vec{X}) = C(F_1(X_1), \ldots, F_n(X_n))
-		\end{align*}
-	\end{theorem}
-\end{frame}
-
-
-\begin{frame}
-	\frametitle{New Spatial Models}
-	\begin{itemize}
-	\item Madsen\cite{madsen09} proposed a spatial Gaussian copula
-	$$
-	G(\vec{V}, \Sigma) = \Phi_{\Sigma}(\Phi^{-1}(F_1(v_1)), \ldots, \Phi^{-1}(F_n(v_n)))
-	$$
-	where the correlation matrix $\Sigma$ is chosen such that it represents the spatial relationships between each of the data points.
-	\item Differentiating the above copula yield the joint density function of the spatially dependent data
-	$$
-	g(\vec{V}) = \| \Sigma \|^{1/2} \text{exp}\left(-\frac{1}{2} z^T (\Sigma^{-1} - I_n) z\right) \prod_{i = 1}^m f_i(y_i)
-	$$
-where $z = (\Phi^{-1}(F_1(y_1)), \ldots, \Phi^{-1}(F_n(y_n)))$.
-	\item This copula will be able to incorporate the spatial dependency structure with the appropriate selection of $F$ and $\Sigma$.
-	\end{itemize}
-\end{frame}
-
-\begin{frame}
-	\frametitle{Spatial Gaussian Copula}
-	A common choice for spatial correlation matrix $\Sigma$ has $i,j$th entry equal to the value of the exponential correlogram function
-	\begin{align*}
-	\Sigma_{ij}(\theta) = 
-		\begin{cases}
-			\theta_0 \text{exp}(-h_{ij} \theta_1) & \text{ for } i \neq j\\
-			1 & \text{ when } i = j
-		\end{cases}
-	\end{align*}
-where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \theta_0 \leq 1$ is the nugget parameter describing the variation of the data at $h = 0$, and $\theta_1 > 0$ is the decay parameter.
-\end{frame}
-
-\begin{frame}
-	\frametitle{Marginal Distributions for Copula Model}
-	An appropriate $F$ function would be one which can handle semicontinuous data.
-	Previous work used a zero-inflated gamma function on cube-root transformed response data.
-	\begin{align*}
-	&f(x) = 
-	\begin{cases}
-		0 & \text{ w.p } p \\
-		\frac{1}{\Gamma(\alpha) \beta^\alpha} x^{\alpha -1} \text{exp}\left(-\frac{x}{\beta}\right) & \text{ w.p. } 1 - p 
-	\end{cases} 
-	\\
-	&\text{where } p \sim \text{Bernoulli}(\pi)
-	\end{align*}
-	\begin{itemize}
-	\item The cube root transformation was used to make the continuous component less skewed
-	\item Zero values were transformed to uniform random variables sampled from a $U(0, \epsilon)$ distribution where $\epsilon$ is the smallest nonzero value in the observed dataset
-	\end{itemize}
-\end{frame}
 
 \begin{frame}
 	\frametitle{Spatial Random Forests}
@@ -193,8 +142,85 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 		\end{align*}
 		where $X_G$ are covariates based on geographic proximity, and $X_R$ are surface reflectance covariates, and $X_P$ and process-based covariates
 		\item Essentially, spatial dependence is modeled by training the random forest on distances from the training points
-		\item Buffer distances between points was calculated in meters using \texttt{raster::pointDistances}
+		\item Euclidean buffer distances between points was calculated in meters using \texttt{raster::pointDistances}
 	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{What are Copulas?}
+	Copulas are "representation[s] of multivariate distributions" \textit{(Fang 2012)}
+	\begin{theorem}[Sklar]
+	Any $n$-dimensional multivariate cumulative distribution function $G(\vec{X})$ of a random vector $\vec{X} = (X_1, \ldots ,X_n)$ can be expressed in terms of the marginal cumulative distribution functions $F_i(X_i)$ and a copula function $C: [0,1]^n \rightarrow [0,1]$ such that
+		\begin{align*}
+			G(\vec{X}) = C(F_1(X_1), \ldots, F_n(X_n))
+		\end{align*}
+	\end{theorem}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Spatial Gaussian Copula}
+	\begin{itemize}
+	\item Madsen\cite{madsen09} proposed a spatial Gaussian copula
+	$$
+	G(\vec{V}, \Sigma) = \Phi_{\Sigma}(\Phi^{-1}(F_1(v_1)), \ldots, \Phi^{-1}(F_n(v_n)))
+	$$
+	where the correlation matrix $\Sigma$ is chosen such that it represents the spatial relationships between the points
+	%\item Differentiating the above copula yield the joint density function of the spatially dependent data
+	%$$
+	%g(\vec{V}) = \| \Sigma \|^{1/2} \text{exp}\left(-\frac{1}{2} z^T (\Sigma^{-1} - I_n) z\right) \prod_{i = 1}^m f_i(y_i)
+	%$$
+%where $z = (\Phi^{-1}(F_1(y_1)), \ldots, \Phi^{-1}(F_n(y_n)))$.
+	\item Transforming our variables into standard normals allow dependence to be completely modeled by correlation
+	\item This copula will be able to incorporate the spatial dependency structure with the appropriate selection of $F$ and $\Sigma$.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Spatial Gaussian Copula}
+	A common choice for spatial correlation matrix $\Sigma$ has $i,j$th entry equal to the value of the exponential correlogram function
+	\begin{align*}
+	\Sigma_{ij}(\theta) = 
+		\begin{cases}
+			\theta_N \text{exp}(-h_{ij} \theta_R) & \text{ for } i \neq j\\
+			1 & \text{ when } i = j
+		\end{cases}
+	\end{align*}
+where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \theta_N \leq 1$ is the nugget parameter describing the variation of the data at $h = 0$, and $\theta_R > 0$ is the range parameter.
+\end{frame}
+
+\begin{frame}
+	\frametitle{Marginal Distributions for Copula Model}
+	An appropriate $F$ function for us would be one which can handle semicontinuous data, such as ZIG.
+	\begin{align*}
+	&f(x) = 
+	\begin{cases}
+		0 & \text{ w.p } \pi \\
+		\frac{1}{\Gamma(\alpha) \beta^\alpha} x^{\alpha -1} \text{exp}\left(-\frac{x}{\beta}\right) & \text{ w.p. } 1 - \pi
+	\end{cases} 
+	\end{align*}
+	\begin{itemize}
+	\item The cube root transformation was used to make the continuous component less skewed
+	\item Zero values were transformed to uniform random variables sampled from a $U(0, \epsilon)$ distribution where $\epsilon$ is the smallest nonzero value in the observed dataset
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Spatial Gaussian Copula algorithm}
+	\begin{algorithm}[H]
+	\SetAlgoLined
+	\KwResult{Predictions for unobserved locations}
+	\For{Each simulated dataset} {
+		Cube root transform observed responses\; 
+		Find smallest nonzero responses $\epsilon$ \;
+		Transform 0s into small $U(0, \epsilon)$ random variables\;
+		Calculate spatial covariance parameters $\theta_N, \theta_R$ and ZIG parameters $\beta, \pi$\;
+		Transform responses to standard uniform using ZIG CDF \; 
+		Transform standard uniforms to standard normals using $\Phi^{-1}$ \; 
+		Use kriging on the standard normal random variables to get estimates for the unobserved values \;
+		Backtransform unobserved standard normal values to get predictions for the unobserved values on the original scale\; 
+	}
+		\caption{Spatial Gaussian Copula}
+	\end{algorithm}
 \end{frame}
 
 \section{Results}
@@ -203,8 +229,8 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 	We will be comparing the predictive accuracy of the following models:
 	\begin{enumerate}
 		\item Spatial Gaussian copula with ZIG marginal distributions
-		\item Ordinary kriging via \texttt{automap}
-		\item Several spatial random forests with varying $num.trees = 50, 100, 150$
+		\item Kriging via \texttt{automap} package
+		\item Spatial random forests with varying $num.trees = 50, 100, 150$
 		\item \textit{Zero-corrected} kriging and spatial random forests where predicted values smaller than the smallest nonzero training observation are converted to 0
 	\end{enumerate}
 \end{frame}
@@ -225,7 +251,7 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 
 \begin{frame}
 	\frametitle{Model Comparison Metrics}
-	We used three prediction metrics to compare the performance of the models in each scenario:
+	Borrowing from ver Hoef \cite{verhoef13}, we used three prediction metrics to compare the performance of the models in each scenario:
 	\begin{enumerate}
 		\item Root Mean Squared Prediction Error (RMSPE)
 		$$
@@ -261,7 +287,7 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 \begin{frame}
 	\frametitle{Metrics: 90\% Predictive Interval Coverage}
 	\begin{align*}
-		PIC_{90} = \frac{1}{mR} \sum_{r=1}^R \sum_{j=1}^m \text{I}\left(y_{j|r} \in \hat{y}_{j|r} \pm 1.645\hat{\text{se}}(\hat{y}_{j|r}) \right)
+		PIC_{90} = \frac{1}{mR} \sum_{r=1}^R \sum_{j=1}^m \mathbb{I}\left(y_{j|r} \in \hat{y}_{j|r} \pm 1.645\hat{\text{se}}(\hat{y}_{j|r}) \right)
 	\end{align*}
 	where $\hat{\text{se}}(\hat{y}_{j|r})$ is the standard error of all the predicted values $\hat{y}_{j|r}$ in resampled dataset $r$.\cite{verhoef13}
 	\begin{itemize}
@@ -282,7 +308,7 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 		$n$ & Copula & Kriging & $RFsp_{150}$ & $RFsp_{100}$ & $RFsp_{50}$ & $RFsp_{150}(zeros)$ & Kriging (zeros) \\ [.5ex] 
 		\hline\hline
 		$1200$ & 246.139 & 238.878 & 251.040 & 250.719 & \cellcolor{gray}252.216 & 251.042 & \cellcolor{cyan}238.868 \\
-		$1000$ & \cellcolor{gray}264.614 & 248.749 & 256.095 & 256.304 & 257.337 & 256.116 & \cellcolor{cyan}248.721 \\
+		$1000$ & 248.894 & 248.749 & 256.095 & 256.304 & \cellcolor{gray}257.337 & 256.116 & \cellcolor{cyan}248.721 \\
 		$500$ & 254.933 & 243.617 & 253.945 & 254.267 & \cellcolor{gray}255.217 & 253.957 & \cellcolor{cyan}243.604 \\
 		$300$ & \cellcolor{gray}264.614 & 248.749 & 256.095 & 256.304 & 257.337 & 256.116 & \cellcolor{cyan}248.721 \\
 		$200$ & \cellcolor{gray}275.154 & 253.674 & 258.074 & 258.246 & 259.417 & 258.113 & \cellcolor{cyan}253.628 \\
@@ -340,7 +366,7 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 \subsubsection{SRB}
 
 \begin{frame}
-	\frametitle{SRB: Resampled Total Volume}
+	\frametitle{SRB: Simulated Total Volume}
 	\begin{center}
 		\resizebox{\textwidth}{!}{%
 		\begin{tabular}{|| c | c c c c c c c ||}
@@ -484,11 +510,10 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 
 \begin{frame}
 	\frametitle{Prediction of zero values}
-	In the resampled data study with $n = 500$, we also calculated RMSPE and median predictions for points with an observed value of 0.
+	In the resampled data study with $n = 500$, we also calculated RMSPE and median predictions for points with a value of 0.
 	\begin{figure}[h]
 		\centering
 	\includegraphics[scale=.5]{zero_yhats}
-	\caption{\label{fig:zero_yhats}Predictions for zero values}
 	\end{figure}
 	\begin{center}
 		\resizebox{\textwidth}{!}{%
@@ -509,33 +534,44 @@ where $h_{ij}$ is the distance between the locations $y_i$ and $y_j$, $0 < \thet
 \begin{frame}
 	\frametitle{Conclusion}
 	\begin{itemize}
-	\item The simulations in our study only covered a small subset of forestry inventory scenarios, but with the prediction metrics we selected, kriging matched or outperformed random forests and Gaussian copula by most measures.
-	\item While both ordinary and universal kriging had a few data artifacts in the form of negative predictions, the kriging models consistently produced unbiased estimates with relatively low RMSPE.
-	\item Both kriging and random forest models also had low absolute values of SRB, suggesting miniscule bias, if any. 
+	\item The simulations in our study only covered a small subset of forestry inventory scenarios, but kriging outperformed random forests and Gaussian copula in most cases, though differences in RMSPE were usually relatively small
+	\item Every single method underestimated large values, as evidenced by the downward trending residual plots
+	\item Both kriging and random forest models also had low absolute values of SRB, suggesting miniscule bias
 	\end{itemize}
 \end{frame}
 
 \begin{frame}
 	\frametitle{Conclusion}
+	``'All models are wrong, but some are useful' \textit{sometimes} - George Box''
+	
+	- Nick Sun
+
 	\begin{itemize}
-	\item In contrast, our results suggest that the Gaussian copula model underpredicts values moreso than the other two techniques, which may be due to an overabundance of zeros in the predictions.
-	\item Given the SRB metrics for each model, we might reasonably posit that model bias played a role in inflating the copula model's RMSPE.
-	\item However, if properly estimating unobserved points which contain zero are of significant practical importance, the Gaussian copula far outperforms both random forest and kriging.
+	\item Our results suggest that the Gaussian copula model underpredicts values moreso than the other two techniques
+	\item However, if properly estimating unobserved points which contain zero are of practical importance, the Gaussian copula outperforms both random forest and kriging
 	\end{itemize}
 \end{frame}
 
-\begin{frame}
-	\frametitle{Conclusion}
-	\begin{itemize}
-	\item For the semicontinuous, skewed responses we simulated, every single method underestimated large values, as evidenced by the downward trending residual plots we generated for each scenario.
-	\item The residual plots also showed that the random forest predictions had greater variance than either the copula or the kriging.
-	\item This larger variance also mainfests itself in the $PIC_{90}$ metrics where the random forest consistently had the greatest coverage among the methods.
-	\end{itemize}
-\end{frame}
+%\begin{frame}
+	%\frametitle{Conclusion}
+	%\begin{itemize}
+	%\item The residual plots also showed that the random forest predictions had greater variance than either the copula or the kriging.
+	%\item This larger variance also mainfests itself in the $PIC_{90}$ metrics where the random forest consistently had the greatest coverage among the methods.
+	%\end{itemize}
+%\end{frame}
 
 \section{References}
 \begin{frame}{References}
 \printbibliography
 \end{frame}
+
+\begin{frame}
+	\frametitle{Thanks!}
+	Oregon State was everything I wanted grad school to be. Thank you to everyone in our department.
+	\vspace{.5cm}
+
+	Special thanks to everyone in my cohort, my parents, Lisa Madsen, Duo Jiang, James Molyneux, and Beaver Hut.
+\end{frame}
+
 
 \end{document}
