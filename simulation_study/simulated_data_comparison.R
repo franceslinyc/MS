@@ -21,7 +21,7 @@ alb.xy <- project(with(dat,cbind(lon_fuzzed,lat_fuzzed)),
 colnames(alb.xy) <- c("x","y")
 dat <- cbind(alb.xy,dat)
 
-train.n <- 1000
+train.n <- 500
 sim.sets.n <- 1000
 
 obs_responses <- vector(mode = "list",length = sim.sets.n)
@@ -284,3 +284,13 @@ ggplot(resids) +
 
 library(gridExtra)
 grid.arrange(g1, g3, g2, nrow = 1)
+
+sim.final.df %>% 
+    group_by(obs) %>% 
+    summarise(
+        count = n(),
+        gauscop.pzero = sum(gauscop_krige == 0)/count,
+        rfsp.pzero = sum(rfsp_tr0 == 0)/count,
+        ok.pzero = sum(ok_tr0 == 0)/count
+    )
+
